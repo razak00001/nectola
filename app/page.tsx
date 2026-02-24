@@ -4,12 +4,13 @@ import { motion } from "framer-motion";
 import { useFlavor } from "@/context/FlavorContext";
 import Image from "next/image";
 import Link from "next/link";
+import { Bottle } from "@/components/Bottle";
 
 const FLAVORS = [
-    { id: 'necto', name: 'Necto Soda', color: '#e8111a' },
-    { id: 'cream', name: 'Cream Soda', color: '#2ec72e' },
-    { id: 'ginger', name: 'Ginger Beer', color: '#d44b00' },
-    { id: 'pineapple', name: 'Pineapple Soda', color: '#f5c800' },
+    { id: 'necto', name: 'Necto Soda', color: '#e8111a', darkColor: '#80090e' },
+    { id: 'cream', name: 'Cream Soda', color: '#2ec72e', darkColor: '#1a751a' },
+    { id: 'ginger', name: 'Ginger Beer', color: '#d44b00', darkColor: '#7a2b00' },
+    { id: 'pineapple', name: 'Pineapple Soda', color: '#f5c800', darkColor: '#8f7500' },
 ];
 
 export default function Home() {
@@ -18,7 +19,7 @@ export default function Home() {
     return (
         <div className="relative overflow-hidden">
             {/* Hero Section */}
-            <section className="relative h-screen w-full flex flex-col items-center justify-center pt-20">
+            <section className="relative min-h-[100dvh] w-full flex flex-col items-center justify-center pt-24 pb-48">
                 {/* Background Animation */}
                 <div className="absolute inset-0 -z-10 bg-[#0a0a0a]">
                     <div
@@ -62,7 +63,7 @@ export default function Home() {
                 </div>
 
                 {/* Hero Content */}
-                <div className="container mx-auto px-6 text-center space-y-6 relative z-10">
+                <div className="container mx-auto px-6 text-center space-y-6 relative z-10 flex-grow flex flex-col justify-center pb-20">
                     <motion.p
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -74,7 +75,7 @@ export default function Home() {
                     <motion.h1
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="font-display text-[8rem] md:text-[14rem] leading-none tracking-tighter"
+                        className="font-display text-[6rem] sm:text-[8rem] md:text-[14rem] leading-none tracking-tighter"
                     >
                         NECT<span style={{ color: 'var(--accent)' }} className="flavor-transition">O</span>LA
                     </motion.h1>
@@ -83,7 +84,7 @@ export default function Home() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.3 }}
-                        className="text-text-muted tracking-[0.5em] text-lg uppercase font-light"
+                        className="text-text-muted tracking-[0.5em] text-sm sm:text-lg uppercase font-light"
                     >
                         Life Tastes Better with Nectola
                     </motion.p>
@@ -100,8 +101,8 @@ export default function Home() {
                     </motion.div>
                 </div>
 
-                {/* Product Showcase */}
-                <div className="absolute bottom-0 left-0 w-full px-6 flex justify-center items-end gap-1 md:gap-8 pb-12 overflow-visible">
+                {/* Product Showcase - SVG Bottles */}
+                <div className="absolute bottom-0 left-0 w-full px-4 sm:px-6 flex justify-center items-end gap-2 md:gap-12 pb-16 overflow-visible">
                     {FLAVORS.map((flavor, index) => (
                         <motion.div
                             key={flavor.id}
@@ -112,21 +113,11 @@ export default function Home() {
                             onClick={() => setFlavor(flavor.id as any)}
                         >
                             <div
-                                className={`relative w-24 h-64 md:w-32 md:h-80 transition-all duration-500 transform group-hover:-translate-y-8 ${currentFlavor === flavor.id ? 'scale-110 -translate-y-4' : 'scale-90 opacity-60 hover:opacity-100'}`}
+                                className={`relative w-20 h-60 sm:w-28 sm:h-[21rem] md:w-36 md:h-[26rem] transition-all duration-500 transform group-hover:-translate-y-8 ${currentFlavor === flavor.id ? 'scale-110 -translate-y-6 z-20' : 'scale-90 opacity-40 hover:opacity-100 z-10'}`}
                             >
-                                <div
-                                    className="absolute inset-0 rounded-2xl border-2 border-white/10 shadow-2xl glass"
-                                    style={{
-                                        background: `linear-gradient(to bottom, rgba(255,255,255,0.05), ${flavor.color}22)`,
-                                        boxShadow: currentFlavor === flavor.id ? `0 0 40px ${flavor.color}44` : 'none'
-                                    }}
-                                >
-                                    <div className="flex items-center justify-center h-full">
-                                        <div className="w-1 h-2/3 rounded-full" style={{ backgroundColor: flavor.color }} />
-                                    </div>
-                                </div>
+                                <Bottle id={flavor.id} name={flavor.name} />
                             </div>
-                            <span className={`mt-4 font-display text-lg tracking-widest uppercase transition-colors ${currentFlavor === flavor.id ? 'text-white' : 'text-text-muted'}`}>
+                            <span className={`mt-6 font-display text-sm sm:text-lg tracking-widest uppercase transition-colors whitespace-nowrap ${currentFlavor === flavor.id ? 'text-white' : 'text-text-muted'}`}>
                                 {flavor.name}
                             </span>
                         </motion.div>
@@ -164,9 +155,10 @@ export default function Home() {
                                         <span className="font-display text-2xl tracking-tighter">{flavor.name}</span>
                                         <div className="w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: flavor.color }} />
                                     </div>
-                                    <div className="relative h-48 w-full">
-                                        {/* Floating glass mockup */}
-                                        <div className="absolute inset-x-0 bottom-0 top-0 m-auto w-12 rounded-full border border-white/10 glass transform group-hover:-translate-y-4 transition-transform duration-500" style={{ backgroundColor: flavor.color + '33' }} />
+                                    <div className="relative h-56 w-full flex justify-center items-end">
+                                        <div className="w-20 h-56 transform group-hover:scale-110 group-hover:-translate-y-4 transition-all duration-500 origin-bottom">
+                                            <Bottle id={flavor.id} name={flavor.name} />
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>
