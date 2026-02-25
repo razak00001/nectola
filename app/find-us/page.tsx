@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useFlavor } from "@/context/FlavorContext";
 import Link from "next/link";
+import { MapPin } from "lucide-react";
+import { Bottle } from "@/components/Bottle";
 
 const FindUs = () => {
     const { config } = useFlavor();
@@ -98,7 +100,7 @@ const FindUs = () => {
                             >
                                 <div className="flex justify-between items-start mb-6">
                                     <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-[var(--accent)] text-xl">
-                                        📍
+                                        <MapPin className="w-5 h-5" />
                                     </div>
                                     <div className="flex gap-1">
                                         {store.flavors.map((f: string) => (
@@ -144,10 +146,26 @@ const FindUs = () => {
                     </div>
 
                     {/* Shelf Image Placeholder */}
-                    <div className="hidden lg:block absolute right-0 top-0 w-1/3 h-full bg-white/5 border-l border-white/10">
-                        <div className="h-full flex items-center justify-center p-12">
-                            <div className="grid grid-cols-2 gap-4 opacity-20">
-                                {[1, 2, 3, 4].map(i => <div key={i} className="w-20 h-40 border border-white/20 rounded-full" />)}
+                    <div className="hidden lg:block absolute right-0 top-0 w-[40%] h-[120%] bg-white/[0.02] border-l border-white/10 overflow-hidden transform -translate-y-[10%]">
+                        <div className="h-full flex items-center justify-center p-12 pr-16 relative">
+                            {/* Decorative background circle */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full border border-white/5 bg-white/[0.01]" />
+
+                            <div className="grid grid-cols-2 gap-x-12 gap-y-16 relative z-10 w-full h-full max-h-[80%] max-w-[80%] items-center justify-items-center">
+                                {[
+                                    { id: 'necto', name: 'Necto Soda' },
+                                    { id: 'cream', name: 'Cream Soda' },
+                                    { id: 'ginger', name: 'Ginger Beer' },
+                                    { id: 'pineapple', name: 'Pineapple Soda' }
+                                ].map((flavor, i) => (
+                                    <div
+                                        key={flavor.id}
+                                        className={`w-full h-full min-h-[160px] relative transition-all duration-700 hover:scale-110 hover:-translate-y-4 cursor-pointer filter drop-shadow-2xl ${i % 2 === 0 ? 'translate-y-8' : '-translate-y-8'}`}
+                                    >
+                                        <div className="absolute inset-0 scale-[1.5] opacity-0 hover:opacity-100 transition-opacity pointer-events-none" style={{ background: `radial-gradient(circle, var(--flavor-${flavor.id}) 0%, transparent 70%)`, filter: 'blur(30px)' }} />
+                                        <Bottle id={flavor.id} name={flavor.name} />
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>

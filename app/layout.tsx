@@ -25,7 +25,7 @@ const pacifico = Pacifico({
 });
 
 export const metadata: Metadata = {
-    title: "Nectola | Life Tastes Better with Nectola 🍁",
+    title: "Nectola | Life Tastes Better with Nectola",
     description: "Official Nectola website - Premium Canadian craft soda brand. Bold flavors, real ingredients.",
 };
 

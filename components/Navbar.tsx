@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useFlavor } from "@/context/FlavorContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight, Droplet } from "lucide-react";
 
 const Navbar = () => {
     const pathname = usePathname();
@@ -147,9 +147,9 @@ const Navbar = () => {
                                 {/* Brand Tagline */}
                                 <motion.p
                                     variants={itemVariants}
-                                    className="text-[var(--accent)] font-bold tracking-[0.4em] uppercase text-[10px] mb-12 opacity-80"
+                                    className="text-[var(--accent)] font-bold tracking-[0.4em] uppercase text-[10px] mb-12 opacity-80 flex items-center justify-center gap-2"
                                 >
-                                    🍁 Crafted in Canada
+                                    <Droplet className="w-3 h-3" /> Crafted in Canada
                                 </motion.p>
 
                                 <div className="flex flex-col gap-8 w-full">

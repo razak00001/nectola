@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useFlavor } from "@/context/FlavorContext";
+import { MapPin, Search, Camera, Music, Users, Twitter } from "lucide-react";
 
 const MOCK_EVENTS = [
     { id: 1, name: "Toronto Summer Fest", date: "JUL 12", year: "2025", location: "Trinity Bellwoods Park", flavor: "necto", color: "#e8111a" },
@@ -57,7 +58,9 @@ export default function Events() {
                                         <span className="font-display text-5xl leading-none">{event.date.split(' ')[1]}</span>
                                         <div className="text-text-muted text-xs tracking-widest uppercase">{event.date.split(' ')[0]} {event.year}</div>
                                     </div>
-                                    <div className="w-10 h-10 rounded-full glass flex items-center justify-center text-xl">📍</div>
+                                    <div className="w-10 h-10 rounded-full glass flex items-center justify-center text-[var(--accent)]">
+                                        <MapPin className="w-5 h-5" />
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2">
@@ -95,10 +98,10 @@ export default function Events() {
                             whileHover={{ scale: 1.02 }}
                         >
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <span className="text-3xl">🔍</span>
+                                <Search className="w-8 h-8 text-white" />
                             </div>
-                            <div className="flex items-center justify-center h-full min-h-[200px] text-white/10 opacity-50 group-hover:opacity-100 group-hover:text-[var(--accent)] transition-all">
-                                📷 Photo {img.id}
+                            <div className="flex items-center justify-center gap-2 h-full min-h-[200px] text-white/10 opacity-50 group-hover:opacity-100 group-hover:text-[var(--accent)] transition-all font-bold">
+                                <Camera className="w-5 h-5" /> Photo {img.id}
                             </div>
                         </motion.div>
                     ))}
@@ -124,7 +127,7 @@ export default function Events() {
                             #NectolaMoments
                         </span>
                         <div className="flex justify-center gap-6">
-                            {['📸', '🎵', '👥', '🐦'].map((icon, i) => (
+                            {[<Camera key="1" />, <Music key="2" />, <Users key="3" />, <Twitter key="4" />].map((icon, i) => (
                                 <button key={i} className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-[var(--accent)] transition-all hover:scale-110">
                                     {icon}
                                 </button>
@@ -147,9 +150,10 @@ export default function Events() {
                         <button className="absolute top-8 right-8 text-white text-4xl">&times;</button>
                         <motion.div
                             layoutId={`img-${selectedImage}`}
-                            className="w-full max-w-4xl aspect-video rounded-3xl bg-bg-card border border-white/10 flex items-center justify-center"
+                            className="w-full max-w-4xl aspect-video rounded-3xl bg-bg-card border border-white/10 flex flex-col items-center justify-center gap-4 text-[var(--accent)]"
                         >
-                            <div className="text-4xl">📷 HD GALLERY PHOTO {selectedImage}</div>
+                            <Camera className="w-12 h-12" />
+                            <div className="text-4xl font-display">HD GALLERY PHOTO {selectedImage}</div>
                         </motion.div>
                     </motion.div>
                 )}

@@ -5,6 +5,8 @@ import { useRef } from "react";
 import { useFlavor } from "@/context/FlavorContext";
 import CountUp from "@/components/CountUp";
 import Image from "next/image";
+import { Droplet } from "lucide-react";
+import { Bottle } from "@/components/Bottle";
 
 const STATS = [
     { label: "Bold Flavors", value: 4, suffix: "" },
@@ -14,7 +16,7 @@ const STATS = [
 ];
 
 export default function About() {
-    const { setFlavor } = useFlavor();
+    const { currentFlavor, setFlavor } = useFlavor();
     const storyRef = useRef(null);
     const isStoryInView = useInView(storyRef, { once: true });
 
@@ -42,25 +44,25 @@ export default function About() {
                             <span style={{ color: 'var(--accent)' }}>REAL FLAVOR</span>
                         </h1>
                         <p className="text-xl text-text-muted leading-relaxed font-light">
-                            Nectola started with a simple belief: life's too short for boring drinks. We wanted to create sodas that actually taste like something — <span className="text-white font-bold">bold, refreshing</span>, and made with real ingredients. Inspired by classic soda fountain flavors and a passion for bringing people together, we crafted four distinct tastes that spark joy in every sip. Proudly Canadian 🍁.
+                            Nectola started with a simple belief: life's too short for boring drinks. We wanted to create sodas that actually taste like something — <span className="text-white font-bold">bold, refreshing</span>, and made with real ingredients. Inspired by classic soda fountain flavors and a passion for bringing people together, we crafted four distinct tastes that spark joy in every sip. Proudly Canadian <Droplet className="w-4 h-4 inline-block ml-1" />.
                         </p>
                     </motion.div>
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={isStoryInView ? { opacity: 1, scale: 1 } : {}}
                         transition={{ duration: 1 }}
-                        className="relative h-[500px] rounded-3xl overflow-hidden glass border border-white/5"
+                        className="relative h-[400px] md:h-[500px] rounded-3xl overflow-hidden glass border border-white/5 flex items-center justify-center p-8"
                     >
                         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
-                        <div className="flex items-center justify-center h-full">
-                            <div className="w-24 h-48 border border-white/10 glass rounded-full opacity-20" />
+                        <div className="relative h-full w-full z-10 max-h-[90%] transition-transform duration-500 hover:scale-[1.03]">
+                            <Bottle id={currentFlavor} name={`${currentFlavor} soda`} />
                         </div>
                     </motion.div>
                 </div>
-            </section>
+            </section >
 
             {/* Stats Bar */}
-            <section className="bg-bg-card py-20 border-y border-white/5 mb-32">
+            < section className="bg-bg-card py-20 border-y border-white/5 mb-32" >
                 <div className="container mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
                     {STATS.map((stat, i) => (
                         <div key={i} className="text-center space-y-2 border-r last:border-0 border-white/10">
@@ -72,10 +74,10 @@ export default function About() {
                         </div>
                     ))}
                 </div>
-            </section>
+            </section >
 
             {/* Showcase Grid */}
-            <section className="container mx-auto px-6 md:px-12">
+            < section className="container mx-auto px-6 md:px-12" >
                 <div className="text-center mb-16">
                     <h2 className="text-6xl md:text-8xl mb-4">MEET THE FAMILY</h2>
                     <p className="text-text-muted tracking-widest uppercase">Four flavors. Endless possibilities.</p>
@@ -102,11 +104,17 @@ export default function About() {
                                     </span>
                                     <h3 className="text-6xl md:text-8xl leading-none">{f.name.split(' ')[0]} <br /> {f.name.split(' ')[1]}</h3>
                                 </div>
-                                <div className="flex items-center gap-4 text-text-muted group-hover:text-white transition-colors">
+                                <div className="flex items-center gap-4 text-text-muted group-hover:text-white transition-colors mt-auto relative z-20">
                                     <span className="text-sm font-body uppercase tracking-[0.3em]">View Details</span>
                                     <div className="w-12 h-px bg-current" />
                                 </div>
                             </div>
+
+                            {/* Bottle Image Layered inside the card */}
+                            <div className="absolute right-[-10%] sm:right-[5%] bottom-[5%] w-32 h-64 sm:w-40 sm:h-80 z-10 transform translate-y-8 group-hover:-translate-y-4 group-hover:scale-110 transition-all duration-500 origin-bottom pointer-events-none">
+                                <Bottle id={f.id} name={f.name} />
+                            </div>
+
                             {/* Bottle Shadow Mock */}
                             <div
                                 className="absolute right-[-10%] bottom-[-10%] w-[300px] h-[300px] blur-[100px] opacity-20 transition-opacity group-hover:opacity-40"
@@ -115,7 +123,7 @@ export default function About() {
                         </motion.div>
                     ))}
                 </div>
-            </section>
-        </div>
+            </section >
+        </div >
     );
 }

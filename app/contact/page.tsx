@@ -7,6 +7,7 @@ import * as z from "zod";
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useFlavor } from "@/context/FlavorContext";
+import { Droplet, Mail, Clock, Package } from "lucide-react";
 
 const contactSchema = z.object({
     name: z.string().min(2, "Name is required"),
@@ -56,7 +57,9 @@ function ContactContent() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-center space-y-6"
             >
-                <div className="w-20 h-20 rounded-full bg-[var(--accent)] mx-auto flex items-center justify-center text-4xl">🍁</div>
+                <div className="w-20 h-20 rounded-full bg-[var(--accent)] mx-auto flex items-center justify-center text-white">
+                    <Droplet className="w-10 h-10" />
+                </div>
                 <h2 className="text-4xl font-display">MESSAGE RECEIVED!</h2>
                 <p className="text-text-muted">Thanks for reaching out. We'll get back to you within 24–48 hours.</p>
                 <button onClick={() => setSubmitted(false)} className="btn-premium">DONE</button>
@@ -75,7 +78,9 @@ function ContactContent() {
 
                 <div className="relative z-10 space-y-6">
                     <p className="font-body text-[var(--accent)] tracking-[0.3em] font-bold text-sm uppercase">Reach Out</p>
-                    <h1 className="text-6xl md:text-8xl leading-none">GET IN <br /> TOUCH 🍁</h1>
+                    <h1 className="text-6xl md:text-8xl leading-none flex items-center gap-4">
+                        GET IN <br /> TOUCH <Droplet className="w-12 h-12 text-[var(--accent)]" />
+                    </h1>
                     <p className="text-xl text-text-muted font-light max-w-md leading-relaxed">
                         We'd love to hear from you — whether you have a question, feedback, or want to stock Nectola.
                     </p>
@@ -83,13 +88,13 @@ function ContactContent() {
 
                 <div className="space-y-8 relative z-10">
                     {[
-                        { icon: "✉️", label: "Email", value: "hello@nectola.com" },
-                        { icon: "🍁", label: "Location", value: "Proudly Canadian" },
-                        { icon: "🕒", label: "Response", value: "24–48 Hours" },
-                        { icon: "📦", label: "Wholesale", value: "Nationwide Availability" },
+                        { icon: <Mail />, label: "Email", value: "hello@nectola.com" },
+                        { icon: <Droplet />, label: "Location", value: "Proudly Canadian" },
+                        { icon: <Clock />, label: "Response", value: "24–48 Hours" },
+                        { icon: <Package />, label: "Wholesale", value: "Nationwide Availability" },
                     ].map((item, i) => (
                         <div key={i} className="flex gap-6 items-center">
-                            <div className="w-14 h-14 rounded-2xl glass flex items-center justify-center text-2xl border border-[var(--accent)]/20 text-[var(--accent)]">
+                            <div className="w-14 h-14 rounded-2xl glass flex items-center justify-center border border-[var(--accent)]/20 text-[var(--accent)]">
                                 {item.icon}
                             </div>
                             <div>
@@ -142,9 +147,9 @@ function ContactContent() {
                             <button
                                 disabled={isSubmitting}
                                 type="submit"
-                                className="w-full btn-premium disabled:opacity-50 text-white font-bold"
+                                className="w-full btn-premium disabled:opacity-50 text-white font-bold flex items-center justify-center gap-2"
                             >
-                                {isSubmitting ? "SENDING..." : "SEND MESSAGE 🍁"}
+                                {isSubmitting ? "SENDING..." : <>SEND MESSAGE <Droplet className="w-4 h-4" /></>}
                             </button>
                         </div>
                     </form>

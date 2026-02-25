@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useFlavor } from "@/context/FlavorContext";
+import { Droplet } from "lucide-react";
 
 const Footer = () => {
     const { currentFlavor } = useFlavor();
@@ -13,8 +14,8 @@ const Footer = () => {
                     <Link href="/" className="font-display text-4xl tracking-tighter" style={{ color: 'var(--accent)' }}>
                         NECTOLA
                     </Link>
-                    <p className="text-text-muted font-body max-w-xs">
-                        Bold flavors. Real ingredients. Canadian pride. 🍁
+                    <p className="text-text-muted font-body max-w-xs flex items-center gap-2">
+                        Bold flavors. Real ingredients. Canadian pride. <Droplet className="w-4 h-4" />
                     </p>
                 </div>
 
@@ -49,7 +50,7 @@ const Footer = () => {
             </div>
 
             <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-text-muted text-sm">
-                <p>© 2025 Nectola. All rights reserved. 🍁 Made in Canada.</p>
+                <p className="flex items-center gap-2">© 2025 Nectola. All rights reserved. <Droplet className="w-3 h-3" /> Made in Canada.</p>
                 <p className="italic">Returnable 10¢ Refund in Québec</p>
             </div>
         </footer>

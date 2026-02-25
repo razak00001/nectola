@@ -5,6 +5,7 @@ import { useFlavor } from "@/context/FlavorContext";
 import Image from "next/image";
 import Link from "next/link";
 import { Bottle } from "@/components/Bottle";
+import { Droplet } from "lucide-react";
 
 const FLAVORS = [
     { id: 'necto', name: 'Necto Soda', color: '#e8111a', darkColor: '#80090e' },
@@ -63,13 +64,13 @@ export default function Home() {
                 </div>
 
                 {/* Hero Content */}
-                <div className="container mx-auto px-6 text-center space-y-6 relative z-10 flex-grow flex flex-col justify-center pb-20">
+                <div className="container mx-auto px-6 text-center space-y-6 relative z-10 flex-grow flex flex-col justify-center pb-32 md:pb-48">
                     <motion.p
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="font-body text-[var(--accent)] tracking-[0.3em] font-bold text-sm uppercase"
+                        className="font-body text-[var(--accent)] tracking-[0.3em] font-bold text-sm uppercase flex items-center justify-center gap-2"
                     >
-                        🍁 Crafted in Canada · Since Day One
+                        <Droplet className="w-4 h-4" /> Crafted in Canada · Since Day One
                     </motion.p>
 
                     <motion.h1
@@ -101,8 +102,8 @@ export default function Home() {
                     </motion.div>
                 </div>
 
-                {/* Product Showcase - SVG Bottles */}
-                <div className="absolute bottom-0 left-0 w-full px-4 sm:px-6 flex justify-center items-end gap-2 md:gap-12 pb-16 overflow-visible">
+                {/* Product Showcase - Bottles */}
+                <div className="absolute -bottom-16 left-0 w-full px-4 sm:px-6 flex justify-center items-end gap-2 md:gap-12 pb-8 overflow-visible z-20">
                     {FLAVORS.map((flavor, index) => (
                         <motion.div
                             key={flavor.id}
@@ -128,10 +129,10 @@ export default function Home() {
                     <span className="text-[10px] uppercase tracking-[0.3em] text-text-muted">Scroll</span>
                     <div className="w-px h-12 bg-gradient-to-b from-[var(--accent)] to-transparent" />
                 </div>
-            </section>
+            </section >
 
             {/* Flavor Grid Section */}
-            <section className="py-24 px-6 md:px-12 bg-[#080808]">
+            < section className="py-24 px-6 md:px-12 bg-[#080808]" >
                 <div className="container mx-auto">
                     <div className="flex flex-col items-center text-center mb-16">
                         <p className="font-body text-[var(--accent)] tracking-[0.3em] font-bold text-xs uppercase mb-2">Our Lineup</p>
@@ -165,7 +166,7 @@ export default function Home() {
                         ))}
                     </div>
                 </div>
-            </section>
-        </div>
+            </section >
+        </div >
     );
 }
