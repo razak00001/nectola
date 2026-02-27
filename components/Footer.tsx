@@ -59,7 +59,6 @@ const Footer = () => {
 
             <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-text-muted text-sm">
                 <p className="flex items-center gap-2">© 2025 Nectola. All rights reserved. <Droplet className="w-3 h-3" /> Made in Canada.</p>
-                <p className="italic">Returnable 10¢ Refund in Québec</p>
             </div>
         </footer>
     );
