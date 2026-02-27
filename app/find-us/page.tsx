@@ -41,7 +41,7 @@ const FindUs = () => {
                 <motion.h1
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-6xl md:text-8xl mb-6"
+                    className="text-4xl sm:text-6xl md:text-8xl mb-6 font-display"
                 >
                     FIND NECTOLA <br />
                     <span style={{ color: 'var(--accent)' }}>NEAR YOU</span>
@@ -51,17 +51,17 @@ const FindUs = () => {
                 </p>
 
                 {/* Search Bar */}
-                <form onSubmit={handleSearch} className="max-w-xl mx-auto flex gap-4">
+                <form onSubmit={handleSearch} className="max-w-xl mx-auto flex flex-col sm:flex-row gap-4">
                     <input
                         type="text"
                         placeholder="Enter your city or postal code"
-                        className="flex-1 bg-bg-card border border-white/10 rounded-full px-6 py-4 text-white focus:outline-none focus:border-[var(--accent)] transition-colors"
+                        className="flex-1 w-full bg-bg-card border border-white/10 rounded-full px-6 py-4 text-white focus:outline-none focus:border-[var(--accent)] transition-colors"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
                     <button
                         type="submit"
-                        className="btn-premium px-10 text-white"
+                        className="btn-premium px-10 w-full sm:w-auto text-white flex justify-center items-center"
                     >
                         SEARCH
                     </button>
@@ -129,14 +129,14 @@ const FindUs = () => {
             </section>
 
             {/* Wholesale Banner */}
-            <section className="container mx-auto px-6 md:px-12">
-                <div className="relative glass p-12 md:p-20 rounded-[3rem] overflow-hidden">
+            <section className="container mx-auto px-4 md:px-12">
+                <div className="relative glass p-8 sm:p-12 md:p-20 rounded-[2rem] sm:rounded-[3rem] overflow-hidden">
                     <div
                         className="absolute inset-0 -z-10 opacity-10"
                         style={{ background: `linear-gradient(45deg, var(--accent) 0%, transparent 100%)` }}
                     />
                     <div className="max-w-2xl">
-                        <h2 className="text-5xl md:text-7xl mb-6">WANT TO CARRY <br /> NECTOLA?</h2>
+                        <h2 className="text-3xl sm:text-5xl md:text-7xl mb-6 font-display uppercase tracking-tight">WANT TO CARRY <br /> NECTOLA?</h2>
                         <p className="text-text-muted text-lg mb-10 leading-relaxed">
                             Bring the buzz to your customers. World-class branding, premium glass bottles, and flavors that keep them coming back. Join the Nectola family today.
                         </p>
