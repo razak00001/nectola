@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useFlavor } from "@/context/FlavorContext";
-import { Droplet } from "lucide-react";
+import { Droplet, Instagram, Facebook, Twitter, Youtube } from "lucide-react";
+
+const socialLinks = [
+    { name: 'Instagram', icon: Instagram, href: 'https://www.instagram.com/drinknectola/' },
+    { name: 'Facebook', icon: Facebook, href: '#' },
+    { name: 'Twitter', icon: Twitter, href: '#' },
+    { name: 'Youtube', icon: Youtube, href: '#' },
+];
 
 const Footer = () => {
     const { currentFlavor } = useFlavor();
@@ -31,15 +38,16 @@ const Footer = () => {
                 <div className="flex flex-col gap-4">
                     <h4 className="text-white text-lg font-bold mb-2">SOCIAL</h4>
                     <div className="flex gap-4">
-                        {['Instagram', 'TikTok', 'Facebook', 'X'].map((social) => (
+                        {socialLinks.map(({ name, icon: Icon, href }) => (
                             <a
-                                key={social}
-                                href="#"
+                                key={name}
+                                href={href}
+                                target={href !== '#' ? "_blank" : undefined}
+                                rel={href !== '#' ? "noopener noreferrer" : undefined}
                                 className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-[var(--accent)] hover:border-[var(--accent)] transition-all transform hover:-translate-y-1"
                             >
-                                <span className="sr-only">{social}</span>
-                                {/* SVG icons would go here */}
-                                <div className="w-4 h-4 bg-white/20 rounded-sm" />
+                                <span className="sr-only">{name}</span>
+                                <Icon className="w-4 h-4 text-white" />
                             </a>
                         ))}
                     </div>
