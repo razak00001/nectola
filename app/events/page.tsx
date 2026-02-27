@@ -32,7 +32,7 @@ export default function Events() {
                     <motion.h1
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-6xl md:text-8xl mb-4"
+                        className="text-4xl sm:text-6xl md:text-8xl mb-4 font-display"
                     >
                         CATCH US <br />
                         <span style={{ color: 'var(--accent)' }}>OUT THERE</span>
@@ -79,8 +79,8 @@ export default function Events() {
 
             {/* Gallery */}
             <section className="container mx-auto px-6 md:px-12 mb-32">
-                <div className="text-center mb-16">
-                    <h2 className="text-5xl md:text-7xl mb-4">MOMENTS WE'VE SHARED</h2>
+                <div className="text-center mb-16 px-4">
+                    <h2 className="text-3xl sm:text-5xl md:text-7xl mb-4 font-display">MOMENTS WE'VE SHARED</h2>
                     <p className="text-text-muted tracking-widest uppercase">A glimpse of the good times.</p>
                 </div>
 
@@ -111,7 +111,7 @@ export default function Events() {
             {/* Social Feed */}
             <section className="bg-bg-card py-24 border-y border-white/5">
                 <div className="container mx-auto px-6 text-center">
-                    <h2 className="text-4xl md:text-6xl mb-4">JOIN THE CONVERSATION</h2>
+                    <h2 className="text-2xl sm:text-4xl md:text-6xl mb-4 font-display">JOIN THE CONVERSATION</h2>
                     <p className="text-text-muted tracking-widest uppercase mb-12">Follow us @nectoladrinks</p>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
@@ -123,7 +123,7 @@ export default function Events() {
                     </div>
 
                     <div className="space-y-6">
-                        <span className="font-accent text-5xl md:text-7xl block transition-colors" style={{ color: 'var(--accent)' }}>
+                        <span className="font-accent text-3xl sm:text-5xl md:text-7xl block transition-colors tracking-tighter sm:tracking-normal" style={{ color: 'var(--accent)' }}>
                             #NectolaMoments
                         </span>
                         <div className="flex justify-center gap-6">
