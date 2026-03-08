@@ -83,3 +83,17 @@
 .flavor-transition {
   transition: color 0.5s ease, background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
 }
+
+.brand-logo {
+  display: inline-block;
+  background-color: var(--accent);
+  mask-image: url('/Logo/English.png');
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-image: url('/Logo/English.png');
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  transition: background-color 0.5s ease;
+}

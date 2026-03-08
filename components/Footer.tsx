@@ -18,8 +18,8 @@ const Footer = () => {
         <footer className="bg-[#080808] border-t border-white/5 py-16 px-6 md:px-12">
             <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
                 <div className="space-y-6">
-                    <Link href="/" className="font-display text-4xl tracking-tighter" style={{ color: 'var(--accent)' }}>
-                        NECTOLA
+                    <Link href="/" aria-label="Nectola Home">
+                        <div className="brand-logo w-32 h-10" />
                     </Link>
                     <p className="text-text-muted font-body max-w-xs flex items-center gap-2">
                         Bold flavors. Real ingredients. Canadian pride. <Droplet className="w-4 h-4" />

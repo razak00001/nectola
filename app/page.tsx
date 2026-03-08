@@ -73,13 +73,13 @@ export default function Home() {
                         <Droplet className="w-4 h-4" /> Crafted in Canada · Since Day One
                     </motion.p>
 
-                    <motion.h1
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="font-display text-[6rem] sm:text-[8rem] md:text-[14rem] leading-none tracking-tighter"
+                        className="flex justify-center"
                     >
-                        NECT<span style={{ color: 'var(--accent)' }} className="flavor-transition">O</span>LA
-                    </motion.h1>
+                        <div className="brand-logo w-[300px] h-[100px] sm:w-[500px] sm:h-[150px] md:w-[800px] md:h-[250px]" />
+                    </motion.div>
 
                     <motion.p
                         initial={{ opacity: 0 }}
@@ -125,48 +125,7 @@ export default function Home() {
                     ))}
                 </div>
 
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-                    <span className="text-[10px] uppercase tracking-[0.3em] text-text-muted">Scroll</span>
-                    <div className="w-px h-12 bg-gradient-to-b from-[var(--accent)] to-transparent" />
-                </div>
-            </section >
-
-            {/* Flavor Grid Section */}
-            < section className="py-24 px-6 md:px-12 bg-[#080808]" >
-                <div className="container mx-auto">
-                    <div className="flex flex-col items-center text-center mb-16">
-                        <p className="font-body text-[var(--accent)] tracking-[0.3em] font-bold text-xs uppercase mb-2">Our Lineup</p>
-                        <h2 className="text-6xl md:text-8xl">THE FLAVORS</h2>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        {FLAVORS.map((flavor) => (
-                            <motion.div
-                                key={flavor.id}
-                                whileHover={{ scale: 1.03 }}
-                                className="relative h-[400px] rounded-3xl overflow-hidden group cursor-pointer bg-bg-card border border-white/5"
-                                onClick={() => setFlavor(flavor.id as any)}
-                            >
-                                <div
-                                    className="absolute inset-0 opacity-20 group-hover:opacity-40 transition-opacity"
-                                    style={{ background: `radial-gradient(circle at top right, ${flavor.color}, transparent)` }}
-                                />
-                                <div className="absolute inset-0 p-8 flex flex-col justify-between">
-                                    <div className="flex justify-between items-start">
-                                        <span className="font-display text-2xl tracking-tighter">{flavor.name}</span>
-                                        <div className="w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: flavor.color }} />
-                                    </div>
-                                    <div className="relative h-56 w-full flex justify-center items-end">
-                                        <div className="w-20 h-56 transform group-hover:scale-110 group-hover:-translate-y-4 transition-all duration-500 origin-bottom">
-                                            <Bottle id={flavor.id} name={flavor.name} />
-                                        </div>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            </section >
-        </div >
+            </section>
+        </div>
     );
 }

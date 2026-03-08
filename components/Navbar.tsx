@@ -63,8 +63,8 @@ const Navbar = () => {
     return (
         <>
             <nav className="fixed top-0 left-0 w-full z-50 glass py-5 px-6 md:px-12 flex justify-between items-center transition-all duration-500 min-h-[5rem]">
-                <Link href="/" className="font-display text-4xl tracking-tighter flavor-transition relative z-50" style={{ color: 'var(--accent)' }}>
-                    NECTOLA
+                <Link href="/" className="relative z-50 flex items-center" aria-label="Nectola Home">
+                    <div className="brand-logo w-32 h-10 md:w-40 md:h-12" />
                 </Link>
 
                 {/* Desktop Menu */}
@@ -124,7 +124,9 @@ const Navbar = () => {
                         >
                             {/* Drawer Header with Close Button */}
                             <div className="flex justify-between items-center py-5 px-6 min-h-[5rem] relative z-20 w-full border-b border-white/5">
-                                <span className="font-display tracking-tighter text-3xl" style={{ color: 'var(--accent)' }}>NECTOLA</span>
+                                <Link href="/" onClick={() => setIsOpen(false)} aria-label="Nectola Home">
+                                    <div className="brand-logo w-28 h-8" />
+                                </Link>
                                 <button
                                     className="p-2 text-white focus:outline-none hover:rotate-90 transition-transform duration-300"
                                     onClick={() => setIsOpen(false)}

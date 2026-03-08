@@ -6,21 +6,37 @@ import { useFlavor } from "@/context/FlavorContext";
 import Link from "next/link";
 import { MapPin } from "lucide-react";
 import { Bottle } from "@/components/Bottle";
+import dynamic from 'next/dynamic';
+
+const StoreMap = dynamic(() => import('@/components/StoreMap'), {
+    ssr: false,
+    loading: () => (
+        <div className="absolute inset-0 bg-[#111] flex flex-col items-center justify-center space-y-4">
+            <div className="w-16 h-16 rounded-full border-4 border-dashed border-[var(--accent)] animate-spin-slow" />
+            <p className="font-display text-2xl tracking-widest text-text-muted">INTERACTIVE MAP LOADING...</p>
+        </div>
+    )
+});
 
 const FindUs = () => {
     const { config } = useFlavor();
     const [search, setSearch] = useState("");
     const [stores, setStores] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
 
     useEffect(() => {
         fetchStores();
     }, []);
 
-    const fetchStores = async (query = "") => {
+    const fetchStores = async (query = "", lat?: number, lng?: number) => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/stores?q=${query}`);
+            let url = `/api/stores?q=${query}`;
+            if (lat && lng) {
+                url += `&lat=${lat}&lng=${lng}`;
+            }
+            const res = await fetch(url);
             const data = await res.json();
             setStores(data);
         } catch (err) {
@@ -32,7 +48,30 @@ const FindUs = () => {
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
+        setUserLocation(null); // Clear user location on manual text search
         fetchStores(search);
+    };
+
+    const handleUseMyLocation = () => {
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by your browser");
+            return;
+        }
+
+        setLoading(true);
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                setUserLocation({ lat, lng });
+                setSearch(""); // Clear text search
+                fetchStores("", lat, lng);
+            },
+            () => {
+                alert("Unable to retrieve your location. Please check your permissions.");
+                setLoading(false);
+            }
+        );
     };
 
     return (
@@ -51,34 +90,44 @@ const FindUs = () => {
                 </p>
 
                 {/* Search Bar */}
-                <form onSubmit={handleSearch} className="max-w-xl mx-auto flex flex-col sm:flex-row gap-4">
-                    <input
-                        type="text"
-                        placeholder="Enter your city or postal code"
-                        className="flex-1 w-full bg-bg-card border border-white/10 rounded-full px-6 py-4 text-white focus:outline-none focus:border-[var(--accent)] transition-colors"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
+                <div className="max-w-xl mx-auto space-y-4">
+                    <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
+                        <input
+                            type="text"
+                            placeholder="Enter your city or postal code"
+                            className="flex-1 w-full bg-bg-card border border-white/10 rounded-full px-6 py-4 text-white focus:outline-none focus:border-[var(--accent)] transition-colors"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                        <button
+                            type="submit"
+                            className="btn-premium px-10 w-full sm:w-auto text-white flex justify-center items-center"
+                        >
+                            SEARCH
+                        </button>
+                    </form>
+
+                    <div className="flex items-center justify-center gap-4 text-sm text-text-muted">
+                        <div className="h-px bg-white/10 flex-1" />
+                        <span>OR</span>
+                        <div className="h-px bg-white/10 flex-1" />
+                    </div>
+
                     <button
-                        type="submit"
-                        className="btn-premium px-10 w-full sm:w-auto text-white flex justify-center items-center"
+                        onClick={handleUseMyLocation}
+                        disabled={loading}
+                        className="w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-full px-6 py-4 text-white font-bold tracking-widest uppercase transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                        SEARCH
+                        <MapPin className="w-5 h-5 text-[var(--accent)]" />
+                        {userLocation ? "Location Found - Update" : "Use My Location"}
                     </button>
-                </form>
+                </div>
             </section>
 
-            {/* Map Stub */}
+            {/* Interactive Map */}
             <section className="container mx-auto px-6 md:px-12 mb-20">
-                <div className="relative h-[450px] w-full rounded-3xl overflow-hidden glass border border-white/5">
-                    <div className="absolute inset-0 bg-[#111] flex flex-col items-center justify-center space-y-4">
-                        <div className="w-16 h-16 rounded-full border-4 border-dashed border-[var(--accent)] animate-spin-slow" />
-                        <p className="font-display text-2xl tracking-widest text-text-muted">INTERACTIVE MAP LOADING...</p>
-                        <div
-                            className="absolute inset-0 opacity-20"
-                            style={{ background: `radial-gradient(circle at center, var(--accent) 0%, transparent 70%)` }}
-                        />
-                    </div>
+                <div className="relative h-[450px] w-full rounded-3xl overflow-hidden glass border border-white/5 z-0">
+                    <StoreMap stores={stores} userLocation={userLocation} />
                 </div>
             </section>
 
@@ -110,7 +159,12 @@ const FindUs = () => {
                                 </div>
                                 <h3 className="text-2xl mb-2 group-hover:text-[var(--accent)] transition-colors">{store.name}</h3>
                                 <p className="text-text-muted font-light mb-1">{store.address}</p>
-                                <p className="text-text-muted font-bold text-sm tracking-widest">{store.city}, {store.province}</p>
+                                <div className="flex justify-between items-center text-text-muted font-bold text-sm tracking-widest">
+                                    <p>{store.city}, {store.province}</p>
+                                    {store.distanceKm !== undefined && (
+                                        <span className="text-[var(--accent)]">{store.distanceKm.toFixed(1)} km</span>
+                                    )}
+                                </div>
 
                                 <div className="mt-6 pt-6 border-t border-white/5">
                                     <span className="text-[10px] items-center gap-2 flex uppercase tracking-widest font-bold text-[var(--accent)]">

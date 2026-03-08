@@ -21,10 +21,10 @@ export default function About() {
     const isStoryInView = useInView(storyRef, { once: true });
 
     const FLAVOR_SHOWCASE = [
-        { id: 'necto' as const, name: 'Necto Soda', color: '#e8111a', tag: 'The Flagship' },
-        { id: 'cream' as const, name: 'Cream Soda', color: '#2ec72e', tag: 'Smooth & Sweet' },
-        { id: 'ginger' as const, name: 'Ginger Beer', color: '#d44b00', tag: 'Spicy Kick' },
-        { id: 'pineapple' as const, name: 'Pineapple Soda', color: '#f5c800', tag: 'Tropical Vibe' },
+        { id: 'necto' as const, name: 'Necto Soda', color: '#e8111a', tag: 'The Flagship', description: "A bold and refreshing burst of tropical fruit flavours, perfectly balanced between sweet and tangy. Made with real fruit ingredients, this classic soda delivers a clean, crisp taste that's anything but boring. Bright, juicy, and unmistakably delicious." },
+        { id: 'cream' as const, name: 'Cream Soda', color: '#2ec72e', tag: 'Smooth & Sweet', description: "Rich, smooth, and velvety with classic vanilla notes. This creamy classic delivers a sweet, indulgent taste that's both nostalgic and refreshing. Made with real ingredients for that old-fashioned soda fountain feel in every sip." },
+        { id: 'ginger' as const, name: 'Ginger Beer', color: '#d44b00', tag: 'Spicy Kick', description: "Zesty, bold, and authentically spicy. Made with real ginger for that unmistakable kick—warm, crisp, and refreshing without being too sweet. The perfect balance of fire and fizz." },
+        { id: 'pineapple' as const, name: 'Pineapple Soda', color: '#f5c800', tag: 'Tropical Vibe', description: "Bold, tropical, and sun-ripened sweet. This flavour captures the bright, juicy taste of real pineapple with a perfect tangy kick. Crisp, refreshing, and tastes like summer in a bottle." },
     ];
 
     return (
@@ -43,9 +43,15 @@ export default function About() {
                             FROM A LOVE OF <br />
                             <span style={{ color: 'var(--accent)' }}>REAL FLAVOR</span>
                         </h1>
-                        <p className="text-xl text-text-muted leading-relaxed font-light">
-                            Nectola started with a simple belief: life's too short for boring drinks. We wanted to create sodas that actually taste like something — <span className="text-white font-bold">bold, refreshing</span>, and made with real ingredients. Inspired by classic soda fountain flavors and a passion for bringing people together, we crafted four distinct tastes that spark joy in every sip. Proudly Canadian <Droplet className="w-4 h-4 inline-block ml-1" />.
-                        </p>
+                        <div className="text-lg text-text-muted leading-relaxed font-light space-y-4">
+                            <p className="tracking-widest text-[var(--accent)] font-bold text-xs uppercase mb-2">FROM THE SHORES OF EELAM TO THE TABLES OF MONTREAL</p>
+                            <p>Nectola began not in a boardroom, but on the open sea. In the early 1990's, a young man left his homeland of Eelam with little more than the memory of its vibrant tastes and a job on a merchant ship. The voyage was long, but his destination was clear: Montreal, Canada a city of new beginnings.</p>
+                            <p>Arriving in a new country, he found much to love, but one thing was missing. Amidst the bustle of his new home, he couldn't find the taste of his home. He craved the bold, unmistakable flavours of Eelam — the real taste of tropical fruit, the kind that reminded you of sun-soaked days and family gatherings. The sodas here, he thought, were simply too quiet.</p>
+                            <p>Driven by that craving, he started small, blending real ingredients in his new Montreal kitchen, trying to capture the essence of the flavours he missed. Word spread. Friends and neighbours were captivated by these drinks that actually tasted like something real and vibrant. And so, in the mid-90's, Necto was born a Taste of Eelam, crafted in Canada.</p>
+                            <p>For decades, Necto was a beloved secret, a connection to heritage in every bubbly sip. Now, in 2026, that legacy evolves. We are proud to unveil Nectola, a rebirth of those original 90's recipes. We've stayed true to our founding belief bold, refreshing, and made with real ingredients but we've refined our craft for a new generation.</p>
+                            <p>Today, Nectola is still inspired by the classic soda fountain flavours that brought people together, infused with the soul of Eelam and the spirit of Montreal. Life's too short for boring drinks. We're here to make sure every sip sparks joy, just as it did for one homesick immigrant over thirty years ago.</p>
+                            <p className="font-bold text-white pt-2">Proudly Canadian. Rooted in Real Flavour.</p>
+                        </div>
                     </motion.div>
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
@@ -103,6 +109,9 @@ export default function About() {
                                         ● {f.id}
                                     </span>
                                     <h3 className="text-6xl md:text-8xl leading-none">{f.name.split(' ')[0]} <br /> {f.name.split(' ')[1]}</h3>
+                                    <p className="mt-6 text-sm text-text-muted/80 leading-relaxed max-w-xs md:max-w-sm">
+                                        {f.description}
+                                    </p>
                                 </div>
                                 <div className="flex items-center gap-4 text-text-muted group-hover:text-white transition-colors mt-auto relative z-20">
                                     <span className="text-sm font-body uppercase tracking-[0.3em]">View Details</span>

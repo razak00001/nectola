@@ -89,8 +89,6 @@ function ContactContent() {
                 <div className="space-y-8 relative z-10">
                     {[
                         { icon: <Mail />, label: "Email", value: "hello@nectola.com" },
-                        { icon: <Droplet />, label: "Location", value: "Proudly Canadian" },
-                        { icon: <Clock />, label: "Response", value: "24–48 Hours" },
                         { icon: <Package />, label: "Wholesale", value: "Nationwide Availability" },
                     ].map((item, i) => (
                         <div key={i} className="flex gap-6 items-center">
