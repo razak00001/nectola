@@ -55,6 +55,7 @@ export default function AdminStoresPage() {
     const [secret, setSecret] = useState("");
     const [authed, setAuthed] = useState(false);
     const [authError, setAuthError] = useState("");
+    const [verifying, setVerifying] = useState(false);
 
     const [stores, setStores] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -133,11 +134,27 @@ export default function AdminStoresPage() {
         setAddressQuery(form.address);
     }, [editingId]); // Only when editingId changes (i.e., a new edit starts)
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!secret.trim()) { setAuthError("Please enter the admin secret."); return; }
-        setAuthed(true);
+        setVerifying(true);
         setAuthError("");
+        try {
+            const res = await fetch('/api/admin/verify', {
+                method: 'POST',
+                headers: { 'x-admin-secret': secret },
+            });
+            if (res.ok) {
+                setAuthed(true);
+            } else {
+                setAuthError("Incorrect secret. Access denied.");
+                setSecret("");
+            }
+        } catch {
+            setAuthError("Unable to connect. Please try again.");
+        } finally {
+            setVerifying(false);
+        }
     };
 
     const fetchStores = async () => {
@@ -227,11 +244,20 @@ export default function AdminStoresPage() {
                         placeholder="Admin secret..."
                         value={secret}
                         onChange={e => setSecret(e.target.value)}
-                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors"
+                        disabled={verifying}
+                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors disabled:opacity-50"
                     />
-                    {authError && <p className="text-red-400 text-sm">{authError}</p>}
-                    <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-white font-bold py-3 rounded-xl tracking-widest uppercase transition-colors">
-                        Enter
+                    {authError && (
+                        <p className="text-red-400 text-sm flex items-center gap-2">
+                            <span>⛔</span> {authError}
+                        </p>
+                    )}
+                    <button
+                        type="submit"
+                        disabled={verifying}
+                        className="bg-orange-500 hover:bg-orange-400 disabled:opacity-60 text-white font-bold py-3 rounded-xl tracking-widest uppercase transition-colors"
+                    >
+                        {verifying ? "Verifying..." : "Enter"}
                     </button>
                 </form>
             </div>
