@@ -266,17 +266,17 @@ export default function AdminStoresPage() {
 
     // --- ADMIN DASHBOARD ---
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white pt-10 pb-24">
-            <div className="max-w-5xl mx-auto px-6 md:px-12">
+        <div className="min-h-screen bg-[#0a0a0a] text-white pt-24 pb-24">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-12">
 
                 {/* Header */}
-                <div className="flex items-center gap-4 mb-12">
-                    <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center">
-                        <Store className="w-6 h-6 text-orange-400" />
+                <div className="flex items-center gap-3 mb-8 md:mb-12">
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
+                        <Store className="w-5 h-5 md:w-6 md:h-6 text-orange-400" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Store Locations</h1>
-                        <p className="text-white/40 text-sm mt-0.5">Add, edit, or remove retail store locations</p>
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Store Locations</h1>
+                        <p className="text-white/40 text-xs md:text-sm mt-0.5">Add, edit, or remove retail store locations</p>
                     </div>
                 </div>
 
@@ -421,7 +421,7 @@ export default function AdminStoresPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="md:col-span-2 flex gap-4">
+                        <div className="md:col-span-2 flex flex-col sm:flex-row gap-3">
                             <button
                                 type="submit"
                                 disabled={submitting}
