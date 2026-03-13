@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MapPin, Plus, Trash2, Pencil, X, Check, Lock, Store, Loader2 } from "lucide-react";
+import { MapPin, Plus, Trash2, Pencil, X, Check, Lock, Store, Loader2, Calendar } from "lucide-react";
 
 const ALL_FLAVORS = ["necto", "cream", "ginger", "pineapple"];
 
@@ -12,7 +12,7 @@ const FLAVOR_COLORS: Record<string, string> = {
     pineapple: "#84cc16",
 };
 
-const emptyForm = {
+const emptyStoreForm = {
     name: "",
     address: "",
     city: "",
@@ -20,6 +20,16 @@ const emptyForm = {
     lat: "",
     lng: "",
     flavors: [] as string[],
+};
+
+const emptyEventForm = {
+    name: "",
+    date: "",
+    year: "2025",
+    location: "",
+    flavor: "necto",
+    description: "",
+    more_info_url: "#",
 };
 
 interface NominatimResult {
@@ -57,9 +67,13 @@ export default function AdminStoresPage() {
     const [authError, setAuthError] = useState("");
     const [verifying, setVerifying] = useState(false);
 
+    const [activeTab, setActiveTab] = useState<"stores" | "events">("stores");
+
     const [stores, setStores] = useState<any[]>([]);
+    const [events, setEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const [form, setForm] = useState(emptyForm);
+    const [storeForm, setStoreForm] = useState(emptyStoreForm);
+    const [eventForm, setEventForm] = useState(emptyEventForm);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const [successMsg, setSuccessMsg] = useState("");
@@ -113,7 +127,7 @@ export default function AdminStoresPage() {
         const province = addr.state_code?.replace(/^CA-/, "") || addr.province || addr.state || "";
 
         setAddressQuery(street || item.display_name);
-        setForm(f => ({
+        setStoreForm(f => ({
             ...f,
             address: street || item.display_name,
             city,
@@ -126,13 +140,16 @@ export default function AdminStoresPage() {
     };
 
     useEffect(() => {
-        if (authed) fetchStores();
+        if (authed) {
+            fetchStores();
+            fetchEvents();
+        }
     }, [authed]);
 
-    // Sync addressQuery → form.address when editing
+    // Sync addressQuery → storeForm.address when editing
     useEffect(() => {
-        setAddressQuery(form.address);
-    }, [editingId]); // Only when editingId changes (i.e., a new edit starts)
+        setAddressQuery(storeForm.address);
+    }, [editingId, storeForm.address]); 
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -164,6 +181,13 @@ export default function AdminStoresPage() {
         setLoading(false);
     };
 
+    const fetchEvents = async () => {
+        setLoading(true);
+        const res = await fetch("/api/events");
+        setEvents(await res.json());
+        setLoading(false);
+    };
+
     const notify = (msg: string, isError = false) => {
         if (isError) { setErrorMsg(msg); setTimeout(() => setErrorMsg(""), 3500); }
         else { setSuccessMsg(msg); setTimeout(() => setSuccessMsg(""), 3500); }
@@ -172,24 +196,37 @@ export default function AdminStoresPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
+        const isStore = activeTab === "stores";
         const isEditing = editingId !== null;
-        const res = await fetch(isEditing ? `/api/stores/${editingId}` : "/api/stores", {
+
+        const endpoint = isStore 
+            ? (isEditing ? `/api/stores/${editingId}` : "/api/stores")
+            : (isEditing ? `/api/events/${editingId}` : "/api/events");
+
+        const payload = isStore ? {
+            ...storeForm,
+            address: addressQuery || storeForm.address,
+            lat: storeForm.lat ? parseFloat(storeForm.lat) : undefined,
+            lng: storeForm.lng ? parseFloat(storeForm.lng) : undefined,
+        } : eventForm;
+
+        const res = await fetch(endpoint, {
             method: isEditing ? "PUT" : "POST",
             headers: { "Content-Type": "application/json", "x-admin-secret": secret },
-            body: JSON.stringify({
-                ...form,
-                address: addressQuery || form.address,
-                lat: form.lat ? parseFloat(form.lat) : undefined,
-                lng: form.lng ? parseFloat(form.lng) : undefined,
-            }),
+            body: JSON.stringify(payload),
         });
 
         if (res.ok) {
-            notify(isEditing ? "Store updated!" : "Store added!");
-            setForm(emptyForm);
-            setAddressQuery("");
+            notify(isEditing ? `${isStore ? "Store" : "Event"} updated!` : `${isStore ? "Store" : "Event"} added!`);
+            if (isStore) {
+                setStoreForm(emptyStoreForm);
+                setAddressQuery("");
+                fetchStores();
+            } else {
+                setEventForm(emptyEventForm);
+                fetchEvents();
+            }
             setEditingId(null);
-            fetchStores();
         } else {
             const data = await res.json();
             notify(data.error || "Something went wrong.", true);
@@ -197,7 +234,7 @@ export default function AdminStoresPage() {
         setSubmitting(false);
     };
 
-    const handleEdit = (store: any) => {
+    const handleEditStore = (store: any) => {
         setEditingId(store.id);
         const f = {
             name: store.name,
@@ -208,20 +245,41 @@ export default function AdminStoresPage() {
             lng: store.lng?.toString() ?? "",
             flavors: store.flavors ?? [],
         };
-        setForm(f);
+        setStoreForm(f);
         setAddressQuery(store.address);
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    const handleDelete = async (id: number) => {
+    const handleEditEvent = (event: any) => {
+        setEditingId(event.id);
+        setEventForm({
+            name: event.name,
+            date: event.date,
+            year: event.year,
+            location: event.location,
+            flavor: event.flavor || "necto",
+            description: event.description || "",
+            more_info_url: event.more_info_url || "#",
+        });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    const handleDeleteStore = async (id: number) => {
         if (!confirm("Delete this store?")) return;
         const res = await fetch(`/api/stores/${id}`, { method: "DELETE", headers: { "x-admin-secret": secret } });
         if (res.ok) { notify("Store deleted."); fetchStores(); }
         else notify("Failed to delete.", true);
     };
 
+    const handleDeleteEvent = async (id: number) => {
+        if (!confirm("Delete this event?")) return;
+        const res = await fetch(`/api/events/${id}`, { method: "DELETE", headers: { "x-admin-secret": secret } });
+        if (res.ok) { notify("Event deleted."); fetchEvents(); }
+        else notify("Failed to delete.", true);
+    };
+
     const toggleFlavor = (flavor: string) => {
-        setForm(f => ({
+        setStoreForm(f => ({
             ...f,
             flavors: f.flavors.includes(flavor) ? f.flavors.filter(x => x !== flavor) : [...f.flavors, flavor],
         }));
@@ -269,14 +327,35 @@ export default function AdminStoresPage() {
         <div className="min-h-screen bg-[#0a0a0a] text-white pt-24 pb-24">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-12">
 
-                {/* Header */}
-                <div className="flex items-center gap-3 mb-8 md:mb-12">
-                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
-                        <Store className="w-5 h-5 md:w-6 md:h-6 text-orange-400" />
+                {/* Header & Tabs */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
+                            {activeTab === "stores" ? <Store className="w-5 h-5 md:w-6 md:h-6 text-orange-400" /> : <Calendar className="w-5 h-5 md:w-6 md:h-6 text-orange-400" />}
+                        </div>
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                                {activeTab === "stores" ? "Store Locations" : "Events Management"}
+                            </h1>
+                            <p className="text-white/40 text-xs md:text-sm mt-0.5">
+                                {activeTab === "stores" ? "Add, edit, or remove retail store locations" : "Manage upcoming Nectola events"}
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Store Locations</h1>
-                        <p className="text-white/40 text-xs md:text-sm mt-0.5">Add, edit, or remove retail store locations</p>
+
+                    <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
+                        <button
+                            onClick={() => { setActiveTab("stores"); setEditingId(null); }}
+                            className={`px-6 py-2.5 rounded-xl text-sm font-bold tracking-widest uppercase transition-all ${activeTab === "stores" ? "bg-orange-500 text-white shadow-lg" : "text-white/40 hover:text-white/60"}`}
+                        >
+                            Stores
+                        </button>
+                        <button
+                            onClick={() => { setActiveTab("events"); setEditingId(null); }}
+                            className={`px-6 py-2.5 rounded-xl text-sm font-bold tracking-widest uppercase transition-all ${activeTab === "events" ? "bg-orange-500 text-white shadow-lg" : "text-white/40 hover:text-white/60"}`}
+                        >
+                            Events
+                        </button>
                     </div>
                 </div>
 
@@ -295,130 +374,206 @@ export default function AdminStoresPage() {
                 {/* Add / Edit Form */}
                 <div className="bg-[#111] border border-white/10 rounded-3xl p-8 mb-12">
                     <h2 className="text-lg font-bold tracking-widest uppercase mb-6 text-white/80">
-                        {editingId !== null ? `Editing Store #${editingId}` : "Add New Store"}
+                        {editingId !== null ? `Editing ${activeTab === "stores" ? "Store" : "Event"} #${editingId}` : `Add New ${activeTab === "stores" ? "Store" : "Event"}`}
                     </h2>
 
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-                        {/* Store Name */}
-                        <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold uppercase tracking-widest text-white/40">Store Name *</label>
-                            <input
-                                type="text"
-                                placeholder="e.g. Fresh Market Toronto"
-                                value={form.name}
-                                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                                required
-                                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
-                            />
-                        </div>
-
-                        {/* Street Address — with Autocomplete */}
-                        <div className="flex flex-col gap-2 relative" ref={suggestionRef}>
-                            <label className="text-xs font-bold uppercase tracking-widest text-white/40">
-                                Street Address *
-                                {suggestLoading && <Loader2 className="inline ml-2 w-3 h-3 animate-spin text-orange-400" />}
-                            </label>
-                            <input
-                                type="text"
-                                placeholder="Start typing an address…"
-                                value={addressQuery}
-                                onChange={e => {
-                                    setAddressQuery(e.target.value);
-                                    setForm(f => ({ ...f, address: e.target.value }));
-                                    setShowSuggestions(true);
-                                }}
-                                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                                required
-                                autoComplete="off"
-                                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
-                            />
-
-                            {/* Dropdown suggestions */}
-                            {showSuggestions && suggestions.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-                                    {suggestions.map(item => (
-                                        <button
-                                            key={item.place_id}
-                                            type="button"
-                                            onMouseDown={() => handleSelectSuggestion(item)}
-                                            className="w-full text-left px-4 py-3 text-sm hover:bg-white/5 transition-colors flex items-start gap-3 border-b border-white/5 last:border-0"
-                                        >
-                                            <MapPin className="w-4 h-4 text-orange-400 mt-0.5 shrink-0" />
-                                            <span className="text-white/80 leading-snug">{item.display_name}</span>
-                                        </button>
-                                    ))}
-                                    <p className="px-4 py-2 text-[10px] text-white/20 text-right">© OpenStreetMap contributors</p>
+                        {activeTab === "stores" ? (
+                            <>
+                                {/* Store fields */}
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Store Name *</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Fresh Market Toronto"
+                                        value={storeForm.name}
+                                        onChange={e => setStoreForm(f => ({ ...f, name: e.target.value }))}
+                                        required
+                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                    />
                                 </div>
-                            )}
-                        </div>
 
-                        {/* City */}
-                        <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold uppercase tracking-widest text-white/40">City *</label>
-                            <input
-                                type="text"
-                                placeholder="Auto-filled from address"
-                                value={form.city}
-                                onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
-                                required
-                                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
-                            />
-                        </div>
+                                <div className="flex flex-col gap-2 relative" ref={suggestionRef}>
+                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">
+                                        Street Address *
+                                        {suggestLoading && <Loader2 className="inline ml-2 w-3 h-3 animate-spin text-orange-400" />}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Start typing an address…"
+                                        value={addressQuery}
+                                        onChange={e => {
+                                            setAddressQuery(e.target.value);
+                                            setStoreForm(f => ({ ...f, address: e.target.value }));
+                                            setShowSuggestions(true);
+                                        }}
+                                        onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                                        required
+                                        autoComplete="off"
+                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                    />
 
-                        {/* Province */}
-                        <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold uppercase tracking-widest text-white/40">Province *</label>
-                            <input
-                                type="text"
-                                placeholder="Auto-filled from address"
-                                value={form.province}
-                                onChange={e => setForm(f => ({ ...f, province: e.target.value }))}
-                                required
-                                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
-                            />
-                        </div>
+                                    {showSuggestions && suggestions.length > 0 && (
+                                        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+                                            {suggestions.map(item => (
+                                                <button
+                                                    key={item.place_id}
+                                                    type="button"
+                                                    onMouseDown={() => handleSelectSuggestion(item)}
+                                                    className="w-full text-left px-4 py-3 text-sm hover:bg-white/5 transition-colors flex items-start gap-3 border-b border-white/5 last:border-0"
+                                                >
+                                                    <MapPin className="w-4 h-4 text-orange-400 mt-0.5 shrink-0" />
+                                                    <span className="text-white/80 leading-snug">{item.display_name}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
 
-                        {/* Lat / Lng (auto-filled, but editable) */}
-                        <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold uppercase tracking-widest text-white/40">Latitude <span className="text-white/20 normal-case font-normal">(auto-filled)</span></label>
-                            <input
-                                type="text"
-                                placeholder="e.g. 43.651070"
-                                value={form.lat}
-                                onChange={e => setForm(f => ({ ...f, lat: e.target.value }))}
-                                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm font-mono"
-                            />
-                        </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">City *</label>
+                                    <input
+                                        type="text"
+                                        value={storeForm.city}
+                                        onChange={e => setStoreForm(f => ({ ...f, city: e.target.value }))}
+                                        required
+                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                    />
+                                </div>
 
-                        <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold uppercase tracking-widest text-white/40">Longitude <span className="text-white/20 normal-case font-normal">(auto-filled)</span></label>
-                            <input
-                                type="text"
-                                placeholder="e.g. -79.387015"
-                                value={form.lng}
-                                onChange={e => setForm(f => ({ ...f, lng: e.target.value }))}
-                                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm font-mono"
-                            />
-                        </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Province *</label>
+                                    <input
+                                        type="text"
+                                        value={storeForm.province}
+                                        onChange={e => setStoreForm(f => ({ ...f, province: e.target.value }))}
+                                        required
+                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                    />
+                                </div>
 
-                        {/* Flavors */}
-                        <div className="md:col-span-2 flex flex-col gap-2">
-                            <label className="text-xs font-bold uppercase tracking-widest text-white/40">Flavors Available</label>
-                            <div className="flex gap-3 flex-wrap">
-                                {ALL_FLAVORS.map(f => (
-                                    <button
-                                        key={f}
-                                        type="button"
-                                        onClick={() => toggleFlavor(f)}
-                                        className={`px-4 py-2 rounded-full text-sm font-bold tracking-widest uppercase border transition-all ${form.flavors.includes(f) ? 'border-transparent text-black' : 'border-white/10 text-white/40 hover:border-white/30'}`}
-                                        style={form.flavors.includes(f) ? { backgroundColor: FLAVOR_COLORS[f] } : {}}
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Latitude</label>
+                                    <input
+                                        type="text"
+                                        value={storeForm.lat}
+                                        onChange={e => setStoreForm(f => ({ ...f, lat: e.target.value }))}
+                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm font-mono"
+                                    />
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Longitude</label>
+                                    <input
+                                        type="text"
+                                        value={storeForm.lng}
+                                        onChange={e => setStoreForm(f => ({ ...f, lng: e.target.value }))}
+                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm font-mono"
+                                    />
+                                </div>
+
+                                <div className="md:col-span-2 flex flex-col gap-2">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Flavors Available</label>
+                                    <div className="flex gap-3 flex-wrap">
+                                        {ALL_FLAVORS.map(f => (
+                                            <button
+                                                key={f}
+                                                type="button"
+                                                onClick={() => toggleFlavor(f)}
+                                                className={`px-4 py-2 rounded-full text-sm font-bold tracking-widest uppercase border transition-all ${storeForm.flavors.includes(f) ? 'border-transparent text-black' : 'border-white/10 text-white/40 hover:border-white/30'}`}
+                                                style={storeForm.flavors.includes(f) ? { backgroundColor: FLAVOR_COLORS[f] } : {}}
+                                            >
+                                                {f}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                {/* Event fields */}
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Event Name *</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Toronto Summer Fest"
+                                        value={eventForm.name}
+                                        onChange={e => setEventForm(f => ({ ...f, name: e.target.value }))}
+                                        required
+                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                    />
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Location *</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Trinity Bellwoods Park"
+                                        value={eventForm.location}
+                                        onChange={e => setEventForm(f => ({ ...f, location: e.target.value }))}
+                                        required
+                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                    />
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Date (e.g. JUL 12) *</label>
+                                    <input
+                                        type="text"
+                                        placeholder="JUL 12"
+                                        value={eventForm.date}
+                                        onChange={e => setEventForm(f => ({ ...f, date: e.target.value.toUpperCase() }))}
+                                        required
+                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                    />
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Year *</label>
+                                    <input
+                                        type="text"
+                                        placeholder="2025"
+                                        value={eventForm.year}
+                                        onChange={e => setEventForm(f => ({ ...f, year: e.target.value }))}
+                                        required
+                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                    />
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Featured Flavor</label>
+                                    <select
+                                        value={eventForm.flavor}
+                                        onChange={e => setEventForm(f => ({ ...f, flavor: e.target.value }))}
+                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm appearance-none"
                                     >
-                                        {f}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                                        {ALL_FLAVORS.map(f => <option key={f} value={f} className="bg-[#111]">{f}</option>)}
+                                    </select>
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">More Info URL</label>
+                                    <input
+                                        type="text"
+                                        placeholder="#"
+                                        value={eventForm.more_info_url}
+                                        onChange={e => setEventForm(f => ({ ...f, more_info_url: e.target.value }))}
+                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                    />
+                                </div>
+
+                                <div className="md:col-span-2 flex flex-col gap-2">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Description</label>
+                                    <textarea
+                                        placeholder="Brief event description..."
+                                        value={eventForm.description}
+                                        onChange={e => setEventForm(f => ({ ...f, description: e.target.value }))}
+                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm min-h-[100px]"
+                                    />
+                                </div>
+                            </>
+                        )}
 
                         {/* Actions */}
                         <div className="md:col-span-2 flex flex-col sm:flex-row gap-3">
@@ -428,12 +583,16 @@ export default function AdminStoresPage() {
                                 className="flex items-center gap-2 bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white font-bold py-3 px-8 rounded-xl tracking-widest uppercase transition-colors"
                             >
                                 <Plus className="w-4 h-4" />
-                                {submitting ? "Saving..." : editingId !== null ? "Update Store" : "Add Store"}
+                                {submitting ? "Saving..." : editingId !== null ? `Update ${activeTab === "stores" ? "Store" : "Event"}` : `Add ${activeTab === "stores" ? "Store" : "Event"}`}
                             </button>
                             {editingId !== null && (
                                 <button
                                     type="button"
-                                    onClick={() => { setEditingId(null); setForm(emptyForm); setAddressQuery(""); }}
+                                    onClick={() => {
+                                        setEditingId(null);
+                                        if (activeTab === "stores") { setStoreForm(emptyStoreForm); setAddressQuery(""); }
+                                        else setEventForm(emptyEventForm);
+                                    }}
                                     className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 font-bold py-3 px-6 rounded-xl tracking-widest uppercase transition-colors"
                                 >
                                     <X className="w-4 h-4" /> Cancel
@@ -443,60 +602,95 @@ export default function AdminStoresPage() {
                     </form>
                 </div>
 
-                {/* Store List */}
+                {/* List Section */}
                 <h2 className="text-lg font-bold tracking-widest uppercase mb-6 text-white/80">
-                    All Stores ({stores.length})
+                    All {activeTab === "stores" ? `Stores (${stores.length})` : `Events (${events.length})`}
                 </h2>
 
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {[1, 2, 3].map(i => <div key={i} className="h-40 rounded-2xl bg-white/5 animate-pulse" />)}
+                        {[1, 2, 3, 4].map(i => <div key={i} className="h-40 rounded-2xl bg-white/5 animate-pulse" />)}
                     </div>
-                ) : stores.length === 0 ? (
-                    <div className="text-center py-20 border border-dashed border-white/10 rounded-3xl text-white/30 uppercase tracking-widest text-sm">
-                        No stores yet. Add one above!
-                    </div>
+                ) : activeTab === "stores" ? (
+                    stores.length === 0 ? (
+                        <div className="text-center py-20 border border-dashed border-white/10 rounded-3xl text-white/30 uppercase tracking-widest text-sm">
+                            No stores yet. Add one above!
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {stores.map(store => (
+                                <div key={store.id} className="bg-[#111] border border-white/10 rounded-3xl p-6 flex flex-col gap-4 hover:border-white/20 transition-colors">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
+                                                <MapPin className="w-4 h-4 text-orange-400" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-white leading-tight">{store.name}</h3>
+                                                <p className="text-white/40 text-sm">{store.city}, {store.province}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2 shrink-0">
+                                            <button onClick={() => handleEditStore(store)} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors">
+                                                <Pencil className="w-3.5 h-3.5 text-white/60" />
+                                            </button>
+                                            <button onClick={() => handleDeleteStore(store.id)} className="w-8 h-8 rounded-full bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center transition-colors">
+                                                <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p className="text-white/50 text-sm">{store.address}</p>
+                                    <div className="flex gap-2 flex-wrap">
+                                        {(store.flavors ?? []).map((f: string) => (
+                                            <span key={f} className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-black" style={{ backgroundColor: FLAVOR_COLORS[f] ?? '#666' }}>
+                                                {f}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {stores.map(store => (
-                            <div key={store.id} className="bg-[#111] border border-white/10 rounded-3xl p-6 flex flex-col gap-4 hover:border-white/20 transition-colors">
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
-                                            <MapPin className="w-4 h-4 text-orange-400" />
+                    events.length === 0 ? (
+                        <div className="text-center py-20 border border-dashed border-white/10 rounded-3xl text-white/30 uppercase tracking-widest text-sm">
+                            No events yet. Add one above!
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {events.map(event => (
+                                <div key={event.id} className="bg-[#111] border border-white/10 rounded-3xl p-6 flex flex-col gap-4 hover:border-white/20 transition-colors">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
+                                                <Calendar className="w-4 h-4 text-orange-400" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-white leading-tight">{event.name}</h3>
+                                                <p className="text-white/40 text-sm">{event.date} {event.year}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="font-bold text-white leading-tight">{store.name}</h3>
-                                            <p className="text-white/40 text-sm">{store.city}, {store.province}</p>
+                                        <div className="flex gap-2 shrink-0">
+                                            <button onClick={() => handleEditEvent(event)} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors">
+                                                <Pencil className="w-3.5 h-3.5 text-white/60" />
+                                            </button>
+                                            <button onClick={() => handleDeleteEvent(event.id)} className="w-8 h-8 rounded-full bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center transition-colors">
+                                                <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                                            </button>
                                         </div>
                                     </div>
-                                    <div className="flex gap-2 shrink-0">
-                                        <button onClick={() => handleEdit(store)} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors">
-                                            <Pencil className="w-3.5 h-3.5 text-white/60" />
-                                        </button>
-                                        <button onClick={() => handleDelete(store.id)} className="w-8 h-8 rounded-full bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center transition-colors">
-                                            <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <p className="text-white/50 text-sm">{store.address}</p>
-
-                                {store.lat && (
-                                    <p className="text-white/30 text-xs font-mono">{store.lat}, {store.lng}</p>
-                                )}
-
-                                <div className="flex gap-2 flex-wrap">
-                                    {(store.flavors ?? []).map((f: string) => (
-                                        <span key={f} className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-black" style={{ backgroundColor: FLAVOR_COLORS[f] ?? '#666' }}>
-                                            {f}
+                                    <p className="text-white/50 text-sm flex items-center gap-2">
+                                        <MapPin className="w-3 h-3" /> {event.location}
+                                    </p>
+                                    <div className="flex gap-2 items-center">
+                                        <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-black" style={{ backgroundColor: FLAVOR_COLORS[event.flavor] ?? '#666' }}>
+                                            {event.flavor}
                                         </span>
-                                    ))}
-                                    {store.flavors?.length === 0 && <span className="text-xs text-white/20">No flavors selected</span>}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )
                 )}
             </div>
         </div>

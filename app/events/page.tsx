@@ -1,16 +1,9 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFlavor } from "@/context/FlavorContext";
 import { MapPin, Search, Camera, Music, Users, Twitter } from "lucide-react";
-
-const MOCK_EVENTS = [
-    { id: 1, name: "Toronto Summer Fest", date: "JUL 12", year: "2025", location: "Trinity Bellwoods Park", flavor: "necto", color: "#e8111a" },
-    { id: 2, name: "Vancouver Beach BBQ", date: "AUG 05", year: "2025", location: "Kitsilano Beach", flavor: "pineapple", color: "#f5c800" },
-    { id: 3, name: "Montreal Jazz Night", date: "SEP 18", year: "2025", location: "Place des Arts", flavor: "cream", color: "#2ec72e" },
-    { id: 4, name: "Calgary Stampede Booth", date: "JUL 20", year: "2025", location: "Stampede Park", flavor: "ginger", color: "#d44b00" },
-];
 
 const GALLERY_IMAGES = [
     { id: 1, size: 'large' },
@@ -23,6 +16,28 @@ const GALLERY_IMAGES = [
 
 export default function Events() {
     const [selectedImage, setSelectedImage] = useState<number | null>(null);
+    const [events, setEvents] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch("/api/events")
+            .then(res => res.json())
+            .then(data => {
+                setEvents(data);
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, []);
+
+    const getFlavorColor = (flavor: string) => {
+        switch (flavor) {
+            case 'necto': return '#e8111a';
+            case 'pineapple': return '#f5c800';
+            case 'cream': return '#2ec72e';
+            case 'ginger': return '#d44b00';
+            default: return 'var(--accent)';
+        }
+    };
 
     return (
         <div className="pt-32 pb-24">
@@ -40,41 +55,52 @@ export default function Events() {
                     <p className="text-text-muted tracking-widest uppercase">Come say hi and grab a cold one.</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-white">
-                    {MOCK_EVENTS.map((event, i) => (
-                        <motion.div
-                            key={event.id}
-                            initial={{ opacity: 0, y: 30 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: i * 0.1 }}
-                            whileHover={{ y: -10 }}
-                            className="bg-bg-card border border-white/5 rounded-3xl overflow-hidden group relative"
-                        >
-                            <div className="h-2 w-full" style={{ backgroundColor: event.color }} />
-                            <div className="p-10 space-y-6">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <span className="font-display text-5xl leading-none">{event.date.split(' ')[1]}</span>
-                                        <div className="text-text-muted text-xs tracking-widest uppercase">{event.date.split(' ')[0]} {event.year}</div>
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {[1, 2, 3].map(i => <div key={i} className="h-64 rounded-3xl bg-bg-card border border-white/5 animate-pulse" />)}
+                    </div>
+                ) : events.length === 0 ? (
+                    <div className="text-center py-20 border border-dashed border-white/10 rounded-3xl text-white/30 uppercase tracking-widest text-sm">
+                        No upcoming events scheduled. Check back soon!
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-white">
+                        {events.map((event, i) => (
+                            <motion.div
+                                key={event.id}
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: i * 0.1 }}
+                                whileHover={{ y: -10 }}
+                                className="bg-bg-card border border-white/5 rounded-3xl overflow-hidden group relative"
+                            >
+                                <div className="h-2 w-full" style={{ backgroundColor: getFlavorColor(event.flavor) }} />
+                                <div className="p-10 space-y-6">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <span className="font-display text-5xl leading-none">{event.date.split(' ')[1]}</span>
+                                            <div className="text-text-muted text-xs tracking-widest uppercase">{event.date.split(' ')[0]} {event.year}</div>
+                                        </div>
+                                        <div className="w-10 h-10 rounded-full glass flex items-center justify-center text-[var(--accent)]">
+                                            <MapPin className="w-5 h-5" />
+                                        </div>
                                     </div>
-                                    <div className="w-10 h-10 rounded-full glass flex items-center justify-center text-[var(--accent)]">
-                                        <MapPin className="w-5 h-5" />
+
+                                    <div className="space-y-2">
+                                        <h3 className="text-2xl font-bold font-body">{event.name}</h3>
+                                        <p className="text-text-muted font-light">{event.location}</p>
+                                        {event.description && <p className="text-sm text-text-muted line-clamp-2">{event.description}</p>}
                                     </div>
-                                </div>
 
-                                <div className="space-y-2">
-                                    <h3 className="text-2xl font-bold font-body">{event.name}</h3>
-                                    <p className="text-text-muted font-light">{event.location}</p>
+                                    <a href={event.more_info_url || "#"} className="inline-block text-sm font-bold uppercase tracking-widest group-hover:tracking-[0.2em] transition-all" style={{ color: getFlavorColor(event.flavor) }}>
+                                        More Info →
+                                    </a>
                                 </div>
-
-                                <a href="#" className="inline-block text-sm font-bold uppercase tracking-widest group-hover:tracking-[0.2em] transition-all" style={{ color: event.color }}>
-                                    More Info →
-                                </a>
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
             </section>
 
             {/* Gallery */}
