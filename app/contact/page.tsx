@@ -52,18 +52,48 @@ function ContactContent() {
 
     if (submitted) {
         return (
-            <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center space-y-6"
-            >
-                <div className="w-20 h-20 rounded-full bg-[var(--accent)] mx-auto flex items-center justify-center text-white">
-                    <Droplet className="w-10 h-10" />
-                </div>
-                <h2 className="text-4xl font-display">MESSAGE RECEIVED!</h2>
-                <p className="text-text-muted">Thanks for reaching out. We'll get back to you within 24–48 hours.</p>
-                <button onClick={() => setSubmitted(false)} className="btn-premium">DONE</button>
-            </motion.div>
+            <div className="min-h-[80vh] flex items-center justify-center pt-32 pb-20 px-6">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                    className="max-w-xl w-full text-center space-y-8 p-12 rounded-[2.5rem] bg-bg-card border border-white/5 relative overflow-hidden shadow-2xl"
+                >
+                    <div
+                        className="absolute inset-0 opacity-20 blur-[80px] pointer-events-none"
+                        style={{ background: `radial-gradient(circle at center, var(--accent) 0%, transparent 70%)` }}
+                    />
+                    
+                    <div className="relative z-10 space-y-8">
+                        <div className="w-24 h-24 rounded-3xl bg-white/5 mx-auto flex items-center justify-center border border-[var(--accent)]/30 text-[var(--accent)]">
+                            <motion.div
+                                initial={{ scale: 0.5, rotate: -45 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                            >
+                                <Droplet className="w-12 h-12" />
+                            </motion.div>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <h2 className="text-4xl md:text-5xl font-display tracking-tight text-white uppercase italic">MESSAGE RECEIVED!</h2>
+                            <p className="text-lg text-text-muted font-light max-w-sm mx-auto leading-relaxed italic opacity-80">
+                                Thanks for reaching out. We've received your inquiry and will get back to you within 24–48 hours. 🍁
+                            </p>
+                        </div>
+                        
+                        <div className="pt-4">
+                            <button 
+                                onClick={() => setSubmitted(false)} 
+                                className="btn-premium px-12 py-4 text-xs font-bold tracking-[0.3em] uppercase flex items-center justify-center gap-3 mx-auto shadow-2xl"
+                                style={{ boxShadow: `0 0 40px var(--accent)22` }}
+                            >
+                                DONE <Droplet className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
         );
     }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MapPin, Plus, Trash2, Pencil, X, Check, Lock, Store, Loader2, Calendar } from "lucide-react";
+import { MapPin, Plus, Trash2, Pencil, X, Check, Lock, Store, Loader2, Calendar, Mail, MessageSquare, CheckCircle } from "lucide-react";
 
 const ALL_FLAVORS = ["necto", "cream", "ginger", "pineapple"];
 
@@ -67,10 +67,11 @@ export default function AdminStoresPage() {
     const [authError, setAuthError] = useState("");
     const [verifying, setVerifying] = useState(false);
 
-    const [activeTab, setActiveTab] = useState<"stores" | "events">("stores");
+    const [activeTab, setActiveTab] = useState<"stores" | "events" | "messages">("stores");
 
     const [stores, setStores] = useState<any[]>([]);
     const [events, setEvents] = useState<any[]>([]);
+    const [messages, setMessages] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [storeForm, setStoreForm] = useState(emptyStoreForm);
     const [eventForm, setEventForm] = useState(emptyEventForm);
@@ -143,6 +144,7 @@ export default function AdminStoresPage() {
         if (authed) {
             fetchStores();
             fetchEvents();
+            fetchMessages();
         }
     }, [authed]);
 
@@ -178,6 +180,15 @@ export default function AdminStoresPage() {
         setLoading(true);
         const res = await fetch("/api/stores");
         setStores(await res.json());
+        setLoading(false);
+    };
+
+    const fetchMessages = async () => {
+        setLoading(true);
+        const res = await fetch("/api/admin/contacts", {
+            headers: { "Authorization": `Bearer ${secret}` }
+        });
+        if (res.ok) setMessages(await res.json());
         setLoading(false);
     };
 
@@ -278,6 +289,42 @@ export default function AdminStoresPage() {
         else notify("Failed to delete.", true);
     };
 
+    const handleDeleteMessage = async (id: number | string) => {
+        if (!id) return;
+        if (!confirm("Delete this message permanently?")) return;
+        
+        try {
+            const res = await fetch(`/api/admin/contacts?id=${id}`, { 
+                method: "DELETE", 
+                headers: { "x-admin-secret": secret } 
+            });
+            
+            if (res.ok) { 
+                notify("Message deleted successfully."); 
+                fetchMessages(); 
+            } else {
+                const data = await res.json().catch(() => ({}));
+                notify(data.error || "Failed to delete message.", true);
+            }
+        } catch (err) {
+            console.error("Delete error:", err);
+            notify("Network error. Please try again.", true);
+        }
+    };
+
+    const handleToggleRead = async (message: any) => {
+        const res = await fetch(`/api/admin/contacts`, {
+            method: "PATCH",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${secret}` 
+            },
+            body: JSON.stringify({ id: message.id, is_read: !message.is_read })
+        });
+        if (res.ok) fetchMessages();
+        else notify("Failed to update status.", true);
+    };
+
     const toggleFlavor = (flavor: string) => {
         setStoreForm(f => ({
             ...f,
@@ -328,33 +375,45 @@ export default function AdminStoresPage() {
             <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-12">
 
                 {/* Header & Tabs */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-12">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
-                            {activeTab === "stores" ? <Store className="w-5 h-5 md:w-6 md:h-6 text-orange-400" /> : <Calendar className="w-5 h-5 md:w-6 md:h-6 text-orange-400" />}
+                            {activeTab === "stores" ? <Store className="w-5 h-5 md:w-6 md:h-6 text-orange-400" /> : 
+                             activeTab === "events" ? <Calendar className="w-5 h-5 md:w-6 md:h-6 text-orange-400" /> :
+                             <Mail className="w-5 h-5 md:w-6 md:h-6 text-orange-400" />}
                         </div>
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-                                {activeTab === "stores" ? "Store Locations" : "Events Management"}
+                            <h1 className="text-xl md:text-3xl font-bold tracking-tight">
+                                {activeTab === "stores" ? "Store Locations" : 
+                                 activeTab === "events" ? "Events Management" : 
+                                 "Messages"}
                             </h1>
-                            <p className="text-white/40 text-xs md:text-sm mt-0.5">
-                                {activeTab === "stores" ? "Add, edit, or remove retail store locations" : "Manage upcoming Nectola events"}
+                            <p className="text-white/40 text-[10px] md:text-sm mt-0.5">
+                                {activeTab === "stores" ? "Add, edit, or remove retail store locations" : 
+                                 activeTab === "events" ? "Manage upcoming Nectola events" :
+                                 "Customer feedback and inquiries"}
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
+                    <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5 overflow-x-auto no-scrollbar max-w-full">
                         <button
                             onClick={() => { setActiveTab("stores"); setEditingId(null); }}
-                            className={`px-6 py-2.5 rounded-xl text-sm font-bold tracking-widest uppercase transition-all ${activeTab === "stores" ? "bg-orange-500 text-white shadow-lg" : "text-white/40 hover:text-white/60"}`}
+                            className={`whitespace-nowrap px-5 md:px-6 py-2 rounded-xl text-[10px] md:text-sm font-bold tracking-widest uppercase transition-all ${activeTab === "stores" ? "bg-orange-500 text-white shadow-lg" : "text-white/40 hover:text-white/60"}`}
                         >
                             Stores
                         </button>
                         <button
                             onClick={() => { setActiveTab("events"); setEditingId(null); }}
-                            className={`px-6 py-2.5 rounded-xl text-sm font-bold tracking-widest uppercase transition-all ${activeTab === "events" ? "bg-orange-500 text-white shadow-lg" : "text-white/40 hover:text-white/60"}`}
+                            className={`whitespace-nowrap px-5 md:px-6 py-2 rounded-xl text-[10px] md:text-sm font-bold tracking-widest uppercase transition-all ${activeTab === "events" ? "bg-orange-500 text-white shadow-lg" : "text-white/40 hover:text-white/60"}`}
                         >
                             Events
+                        </button>
+                        <button
+                            onClick={() => { setActiveTab("messages"); setEditingId(null); }}
+                            className={`whitespace-nowrap px-5 md:px-6 py-2 rounded-xl text-[10px] md:text-sm font-bold tracking-widest uppercase transition-all ${activeTab === "messages" ? "bg-orange-500 text-white shadow-lg" : "text-white/40 hover:text-white/60"}`}
+                        >
+                            Messages
                         </button>
                     </div>
                 </div>
@@ -371,246 +430,293 @@ export default function AdminStoresPage() {
                     </div>
                 )}
 
-                {/* Add / Edit Form */}
-                <div className="bg-[#111] border border-white/10 rounded-3xl p-8 mb-12">
-                    <h2 className="text-lg font-bold tracking-widest uppercase mb-6 text-white/80">
-                        {editingId !== null ? `Editing ${activeTab === "stores" ? "Store" : "Event"} #${editingId}` : `Add New ${activeTab === "stores" ? "Store" : "Event"}`}
-                    </h2>
+                {/* Add / Edit Form (Not for messages) */}
+                {activeTab !== "messages" && (
+                    <div className="bg-[#111] border border-white/10 rounded-3xl p-8 mb-12 shadow-xl">
+                        <h2 className="text-lg font-bold tracking-widest uppercase mb-6 text-white/80">
+                            {editingId !== null ? `Editing ${activeTab === "stores" ? "Store" : "Event"} #${editingId}` : `Add New ${activeTab === "stores" ? "Store" : "Event"}`}
+                        </h2>
 
-                    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            {activeTab === "stores" ? (
+                                <>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-white/40">Store Name *</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. Fresh Market Toronto"
+                                            value={storeForm.name}
+                                            onChange={e => setStoreForm(f => ({ ...f, name: e.target.value }))}
+                                            required
+                                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                        />
+                                    </div>
 
-                        {activeTab === "stores" ? (
-                            <>
-                                {/* Store fields */}
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Store Name *</label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. Fresh Market Toronto"
-                                        value={storeForm.name}
-                                        onChange={e => setStoreForm(f => ({ ...f, name: e.target.value }))}
-                                        required
-                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
-                                    />
-                                </div>
+                                    <div className="flex flex-col gap-2 relative" ref={suggestionRef}>
+                                        <label className="text-xs font-bold uppercase tracking-widest text-white/40">
+                                            Street Address *
+                                            {suggestLoading && <Loader2 className="inline ml-2 w-3 h-3 animate-spin text-orange-400" />}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="Start typing an address…"
+                                            value={addressQuery}
+                                            onChange={e => {
+                                                setAddressQuery(e.target.value);
+                                                setStoreForm(f => ({ ...f, address: e.target.value }));
+                                                setShowSuggestions(true);
+                                            }}
+                                            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                                            required
+                                            autoComplete="off"
+                                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                        />
 
-                                <div className="flex flex-col gap-2 relative" ref={suggestionRef}>
-                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">
-                                        Street Address *
-                                        {suggestLoading && <Loader2 className="inline ml-2 w-3 h-3 animate-spin text-orange-400" />}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        placeholder="Start typing an address…"
-                                        value={addressQuery}
-                                        onChange={e => {
-                                            setAddressQuery(e.target.value);
-                                            setStoreForm(f => ({ ...f, address: e.target.value }));
-                                            setShowSuggestions(true);
-                                        }}
-                                        onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                                        required
-                                        autoComplete="off"
-                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
-                                    />
+                                        {showSuggestions && suggestions.length > 0 && (
+                                            <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+                                                {suggestions.map(item => (
+                                                    <button
+                                                        key={item.place_id}
+                                                        type="button"
+                                                        onMouseDown={() => handleSelectSuggestion(item)}
+                                                        className="w-full text-left px-4 py-3 text-sm hover:bg-white/5 transition-colors flex items-start gap-3 border-b border-white/5 last:border-0"
+                                                    >
+                                                        <MapPin className="w-4 h-4 text-orange-400 mt-0.5 shrink-0" />
+                                                        <span className="text-white/80 leading-snug">{item.display_name}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
 
-                                    {showSuggestions && suggestions.length > 0 && (
-                                        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-                                            {suggestions.map(item => (
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-white/40">City *</label>
+                                        <input
+                                            type="text"
+                                            value={storeForm.city}
+                                            onChange={e => setStoreForm(f => ({ ...f, city: e.target.value }))}
+                                            required
+                                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                        />
+                                    </div>
+
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-white/40">Province *</label>
+                                        <input
+                                            type="text"
+                                            value={storeForm.province}
+                                            onChange={e => setStoreForm(f => ({ ...f, province: e.target.value }))}
+                                            required
+                                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                        />
+                                    </div>
+
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-white/40">Latitude</label>
+                                        <input
+                                            type="text"
+                                            value={storeForm.lat}
+                                            onChange={e => setStoreForm(f => ({ ...f, lat: e.target.value }))}
+                                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm font-mono"
+                                        />
+                                    </div>
+
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-white/40">Longitude</label>
+                                        <input
+                                            type="text"
+                                            value={storeForm.lng}
+                                            onChange={e => setStoreForm(f => ({ ...f, lng: e.target.value }))}
+                                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm font-mono"
+                                        />
+                                    </div>
+
+                                    <div className="md:col-span-2 flex flex-col gap-2">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-white/40">Flavors Available</label>
+                                        <div className="flex gap-3 flex-wrap">
+                                            {ALL_FLAVORS.map(f => (
                                                 <button
-                                                    key={item.place_id}
+                                                    key={f}
                                                     type="button"
-                                                    onMouseDown={() => handleSelectSuggestion(item)}
-                                                    className="w-full text-left px-4 py-3 text-sm hover:bg-white/5 transition-colors flex items-start gap-3 border-b border-white/5 last:border-0"
+                                                    onClick={() => toggleFlavor(f)}
+                                                    className={`px-4 py-2 rounded-full text-sm font-bold tracking-widest uppercase border transition-all ${storeForm.flavors.includes(f) ? 'border-transparent text-black' : 'border-white/10 text-white/40 hover:border-white/30'}`}
+                                                    style={storeForm.flavors.includes(f) ? { backgroundColor: FLAVOR_COLORS[f] } : {}}
                                                 >
-                                                    <MapPin className="w-4 h-4 text-orange-400 mt-0.5 shrink-0" />
-                                                    <span className="text-white/80 leading-snug">{item.display_name}</span>
+                                                    {f}
                                                 </button>
                                             ))}
                                         </div>
-                                    )}
-                                </div>
-
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">City *</label>
-                                    <input
-                                        type="text"
-                                        value={storeForm.city}
-                                        onChange={e => setStoreForm(f => ({ ...f, city: e.target.value }))}
-                                        required
-                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
-                                    />
-                                </div>
-
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Province *</label>
-                                    <input
-                                        type="text"
-                                        value={storeForm.province}
-                                        onChange={e => setStoreForm(f => ({ ...f, province: e.target.value }))}
-                                        required
-                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
-                                    />
-                                </div>
-
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Latitude</label>
-                                    <input
-                                        type="text"
-                                        value={storeForm.lat}
-                                        onChange={e => setStoreForm(f => ({ ...f, lat: e.target.value }))}
-                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm font-mono"
-                                    />
-                                </div>
-
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Longitude</label>
-                                    <input
-                                        type="text"
-                                        value={storeForm.lng}
-                                        onChange={e => setStoreForm(f => ({ ...f, lng: e.target.value }))}
-                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm font-mono"
-                                    />
-                                </div>
-
-                                <div className="md:col-span-2 flex flex-col gap-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Flavors Available</label>
-                                    <div className="flex gap-3 flex-wrap">
-                                        {ALL_FLAVORS.map(f => (
-                                            <button
-                                                key={f}
-                                                type="button"
-                                                onClick={() => toggleFlavor(f)}
-                                                className={`px-4 py-2 rounded-full text-sm font-bold tracking-widest uppercase border transition-all ${storeForm.flavors.includes(f) ? 'border-transparent text-black' : 'border-white/10 text-white/40 hover:border-white/30'}`}
-                                                style={storeForm.flavors.includes(f) ? { backgroundColor: FLAVOR_COLORS[f] } : {}}
-                                            >
-                                                {f}
-                                            </button>
-                                        ))}
                                     </div>
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                {/* Event fields */}
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Event Name *</label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. Toronto Summer Fest"
-                                        value={eventForm.name}
-                                        onChange={e => setEventForm(f => ({ ...f, name: e.target.value }))}
-                                        required
-                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
-                                    />
-                                </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-white/40">Event Name *</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. Toronto Summer Fest"
+                                            value={eventForm.name}
+                                            onChange={e => setEventForm(f => ({ ...f, name: e.target.value }))}
+                                            required
+                                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                        />
+                                    </div>
 
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Location *</label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. Trinity Bellwoods Park"
-                                        value={eventForm.location}
-                                        onChange={e => setEventForm(f => ({ ...f, location: e.target.value }))}
-                                        required
-                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
-                                    />
-                                </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-white/40">Location *</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. Trinity Bellwoods Park"
+                                            value={eventForm.location}
+                                            onChange={e => setEventForm(f => ({ ...f, location: e.target.value }))}
+                                            required
+                                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                        />
+                                    </div>
 
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Date (e.g. JUL 12) *</label>
-                                    <input
-                                        type="text"
-                                        placeholder="JUL 12"
-                                        value={eventForm.date}
-                                        onChange={e => setEventForm(f => ({ ...f, date: e.target.value.toUpperCase() }))}
-                                        required
-                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
-                                    />
-                                </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-white/40">Date (e.g. JUL 12) *</label>
+                                        <input
+                                            type="text"
+                                            placeholder="JUL 12"
+                                            value={eventForm.date}
+                                            onChange={e => setEventForm(f => ({ ...f, date: e.target.value.toUpperCase() }))}
+                                            required
+                                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                        />
+                                    </div>
 
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Year *</label>
-                                    <input
-                                        type="text"
-                                        placeholder="2025"
-                                        value={eventForm.year}
-                                        onChange={e => setEventForm(f => ({ ...f, year: e.target.value }))}
-                                        required
-                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
-                                    />
-                                </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-white/40">Year *</label>
+                                        <input
+                                            type="text"
+                                            placeholder="2025"
+                                            value={eventForm.year}
+                                            onChange={e => setEventForm(f => ({ ...f, year: e.target.value }))}
+                                            required
+                                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                        />
+                                    </div>
 
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Featured Flavor</label>
-                                    <select
-                                        value={eventForm.flavor}
-                                        onChange={e => setEventForm(f => ({ ...f, flavor: e.target.value }))}
-                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm appearance-none"
-                                    >
-                                        {ALL_FLAVORS.map(f => <option key={f} value={f} className="bg-[#111]">{f}</option>)}
-                                    </select>
-                                </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-white/40">Featured Flavor</label>
+                                        <select
+                                            value={eventForm.flavor}
+                                            onChange={e => setEventForm(f => ({ ...f, flavor: e.target.value }))}
+                                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm appearance-none"
+                                        >
+                                            {ALL_FLAVORS.map(f => <option key={f} value={f} className="bg-[#111]">{f}</option>)}
+                                        </select>
+                                    </div>
 
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">More Info URL</label>
-                                    <input
-                                        type="text"
-                                        placeholder="#"
-                                        value={eventForm.more_info_url}
-                                        onChange={e => setEventForm(f => ({ ...f, more_info_url: e.target.value }))}
-                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
-                                    />
-                                </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-white/40">More Info URL</label>
+                                        <input
+                                            type="text"
+                                            placeholder="#"
+                                            value={eventForm.more_info_url}
+                                            onChange={e => setEventForm(f => ({ ...f, more_info_url: e.target.value }))}
+                                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm"
+                                        />
+                                    </div>
 
-                                <div className="md:col-span-2 flex flex-col gap-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Description</label>
-                                    <textarea
-                                        placeholder="Brief event description..."
-                                        value={eventForm.description}
-                                        onChange={e => setEventForm(f => ({ ...f, description: e.target.value }))}
-                                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm min-h-[100px]"
-                                    />
-                                </div>
-                            </>
-                        )}
-
-                        {/* Actions */}
-                        <div className="md:col-span-2 flex flex-col sm:flex-row gap-3">
-                            <button
-                                type="submit"
-                                disabled={submitting}
-                                className="flex items-center gap-2 bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white font-bold py-3 px-8 rounded-xl tracking-widest uppercase transition-colors"
-                            >
-                                <Plus className="w-4 h-4" />
-                                {submitting ? "Saving..." : editingId !== null ? `Update ${activeTab === "stores" ? "Store" : "Event"}` : `Add ${activeTab === "stores" ? "Store" : "Event"}`}
-                            </button>
-                            {editingId !== null && (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setEditingId(null);
-                                        if (activeTab === "stores") { setStoreForm(emptyStoreForm); setAddressQuery(""); }
-                                        else setEventForm(emptyEventForm);
-                                    }}
-                                    className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 font-bold py-3 px-6 rounded-xl tracking-widest uppercase transition-colors"
-                                >
-                                    <X className="w-4 h-4" /> Cancel
-                                </button>
+                                    <div className="md:col-span-2 flex flex-col gap-2">
+                                        <label className="text-xs font-bold uppercase tracking-widest text-white/40">Description</label>
+                                        <textarea
+                                            placeholder="Brief event description..."
+                                            value={eventForm.description}
+                                            onChange={e => setEventForm(f => ({ ...f, description: e.target.value }))}
+                                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400 transition-colors text-sm min-h-[100px]"
+                                        />
+                                    </div>
+                                </>
                             )}
-                        </div>
-                    </form>
-                </div>
+
+                            <div className="md:col-span-2 flex flex-col sm:flex-row gap-3">
+                                <button
+                                    type="submit"
+                                    disabled={submitting}
+                                    className="flex items-center gap-2 bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white font-bold py-3 px-8 rounded-xl tracking-widest uppercase transition-all shadow-lg active:scale-95"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    {submitting ? "Saving..." : editingId !== null ? `Update ${activeTab === "stores" ? "Store" : "Event"}` : `Add ${activeTab === "stores" ? "Store" : "Event"}`}
+                                </button>
+                                {editingId !== null && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setEditingId(null);
+                                            if (activeTab === "stores") { setStoreForm(emptyStoreForm); setAddressQuery(""); }
+                                            else setEventForm(emptyEventForm);
+                                        }}
+                                        className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 font-bold py-3 px-6 rounded-xl tracking-widest uppercase transition-colors"
+                                    >
+                                        <X className="w-4 h-4" /> Cancel
+                                    </button>
+                                )}
+                            </div>
+                        </form>
+                    </div>
+                )}
 
                 {/* List Section */}
                 <h2 className="text-lg font-bold tracking-widest uppercase mb-6 text-white/80">
-                    All {activeTab === "stores" ? `Stores (${stores.length})` : `Events (${events.length})`}
+                    {activeTab === "messages" ? `Inquiries (${messages.length})` : 
+                     activeTab === "stores" ? `All Stores (${stores.length})` : `Upcoming Events (${events.length})`}
                 </h2>
 
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {[1, 2, 3, 4].map(i => <div key={i} className="h-40 rounded-2xl bg-white/5 animate-pulse" />)}
+                        {[1, 2, 3, 4].map(i => <div key={i} className="h-40 rounded-3xl bg-white/5 animate-pulse border border-white/5" />)}
                     </div>
+                ) : activeTab === "messages" ? (
+                    messages.length === 0 ? (
+                        <div className="text-center py-20 border border-dashed border-white/10 rounded-3xl text-white/30 uppercase tracking-widest text-sm bg-white/[0.02]">
+                            No messages yet.
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-4">
+                            {messages.map(msg => (
+                                <div key={msg.id} className={`bg-[#111] border rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-6 transition-all hover:bg-[#151515] ${msg.is_read ? 'border-white/5 opacity-60' : 'border-orange-500/30 bg-[#161616] shadow-lg shadow-orange-500/5'}`}>
+                                    <div className="flex-1 space-y-4">
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${msg.is_read ? 'bg-white/10 text-white/40' : 'bg-orange-500 text-black'}`}>
+                                                {msg.subject}
+                                            </span>
+                                            <span className="text-white/20 text-xs font-mono">
+                                                {new Date(msg.created_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold flex items-center gap-2">
+                                                {msg.name} <span className="text-white/20 font-normal text-sm">— {msg.email}</span>
+                                            </h3>
+                                            {msg.phone && <p className="text-white/40 text-sm mt-1">📞 {msg.phone}</p>}
+                                        </div>
+                                        <p className="text-white/70 leading-relaxed font-body whitespace-pre-line bg-white/5 p-4 rounded-2xl italic">
+                                            "{msg.message}"
+                                        </p>
+                                    </div>
+                                    <div className="flex md:flex-col gap-3 shrink-0">
+                                        <button 
+                                            onClick={() => handleToggleRead(msg)} 
+                                            title={msg.is_read ? "Mark as unread" : "Mark as read"}
+                                            className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${msg.is_read ? 'bg-white/5 text-white/40 hover:bg-white/10' : 'bg-orange-500/10 text-orange-400 hover:bg-orange-500/20'}`}
+                                        >
+                                            {msg.is_read ? <MessageSquare className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDeleteMessage(msg.id)} 
+                                            title="Delete message"
+                                            className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-all"
+                                        >
+                                            <Trash2 className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )
                 ) : activeTab === "stores" ? (
                     stores.length === 0 ? (
                         <div className="text-center py-20 border border-dashed border-white/10 rounded-3xl text-white/30 uppercase tracking-widest text-sm">
@@ -619,7 +725,7 @@ export default function AdminStoresPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {stores.map(store => (
-                                <div key={store.id} className="bg-[#111] border border-white/10 rounded-3xl p-6 flex flex-col gap-4 hover:border-white/20 transition-colors">
+                                <div key={store.id} className="bg-[#111] border border-white/10 rounded-3xl p-6 flex flex-col gap-4 hover:border-white/20 transition-colors shadow-lg">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-9 h-9 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
@@ -631,11 +737,11 @@ export default function AdminStoresPage() {
                                             </div>
                                         </div>
                                         <div className="flex gap-2 shrink-0">
-                                            <button onClick={() => handleEditStore(store)} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors">
-                                                <Pencil className="w-3.5 h-3.5 text-white/60" />
+                                            <button onClick={() => handleEditStore(store)} className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors">
+                                                <Pencil className="w-4 h-4 text-white/60" />
                                             </button>
-                                            <button onClick={() => handleDeleteStore(store.id)} className="w-8 h-8 rounded-full bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center transition-colors">
-                                                <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                                            <button onClick={() => handleDeleteStore(store.id)} className="w-9 h-9 rounded-xl bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center transition-colors">
+                                                <Trash2 className="w-4 h-4 text-red-400" />
                                             </button>
                                         </div>
                                     </div>
@@ -659,7 +765,7 @@ export default function AdminStoresPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {events.map(event => (
-                                <div key={event.id} className="bg-[#111] border border-white/10 rounded-3xl p-6 flex flex-col gap-4 hover:border-white/20 transition-colors">
+                                <div key={event.id} className="bg-[#111] border border-white/10 rounded-3xl p-6 flex flex-col gap-4 hover:border-white/20 transition-colors shadow-lg">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-9 h-9 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
@@ -671,11 +777,11 @@ export default function AdminStoresPage() {
                                             </div>
                                         </div>
                                         <div className="flex gap-2 shrink-0">
-                                            <button onClick={() => handleEditEvent(event)} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors">
-                                                <Pencil className="w-3.5 h-3.5 text-white/60" />
+                                            <button onClick={() => handleEditEvent(event)} className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors">
+                                                <Pencil className="w-4 h-4 text-white/60" />
                                             </button>
-                                            <button onClick={() => handleDeleteEvent(event.id)} className="w-8 h-8 rounded-full bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center transition-colors">
-                                                <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                                            <button onClick={() => handleDeleteEvent(event.id)} className="w-9 h-9 rounded-xl bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center transition-colors">
+                                                <Trash2 className="w-4 h-4 text-red-400" />
                                             </button>
                                         </div>
                                     </div>
